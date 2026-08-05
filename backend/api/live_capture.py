@@ -1,6 +1,8 @@
 from fastapi import APIRouter, UploadFile, File
 from backend.schemas.live_capture import CaptureLiveResponse
-from backend.utils.image_io import validate_image
+from backend.utils.image_io import validate_image, decode_image_bytes
+from backend.utils.session_store import create_session
+from backend.config.settings import settings
 
 router = APIRouter()
 
@@ -18,9 +20,12 @@ async def capture_live(file: UploadFile = File(...)):
             reason_codes=reason_codes,
         )
 
-    # Placeholder: Return dummy response before model integration
+    # Image is valid, decode and store temporarily
+    img = decode_image_bytes(image_bytes)
+    session_id = create_session({"image": img, "type": "live"}, ttl_seconds=settings.SESSION_TTL_SECONDS)
+
     return CaptureLiveResponse(
-        session_id="fake_live_session_id_456",
+        session_id=session_id,
         status="success",
         liveness_result="passed",
         quality_metrics={"brightness": 0.88},

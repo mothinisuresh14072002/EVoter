@@ -1,6 +1,8 @@
 from fastapi import APIRouter, UploadFile, File
 from backend.schemas.aadhaar import UploadAadhaarResponse
-from backend.utils.image_io import validate_image
+from backend.utils.image_io import validate_image, decode_image_bytes
+from backend.utils.session_store import create_session
+from backend.config.settings import settings
 
 router = APIRouter()
 
@@ -17,9 +19,12 @@ async def upload_aadhaar(file: UploadFile = File(...)):
             reason_codes=reason_codes,
         )
 
-    # Placeholder: Return dummy response before model integration
+    # Image is valid, decode and store temporarily
+    img = decode_image_bytes(image_bytes)
+    session_id = create_session({"image": img, "type": "aadhaar"}, ttl_seconds=settings.SESSION_TTL_SECONDS)
+
     return UploadAadhaarResponse(
-        session_id="fake_reference_session_id_123",
+        session_id=session_id,
         status="success",
         quality_metrics={"sharpness": 0.95},
         reason_codes=[],

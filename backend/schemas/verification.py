@@ -8,6 +8,7 @@ class VerifyRequest(BaseModel):
 class VerifyResponse(BaseModel):
     session_id: str
     status: Literal["match", "manual_review", "reject", "failed"]
+    confidence_score: Optional[float] = None
     liveness_result: Optional[str] = None
     quality_metrics: Dict[str, float] = {}
     reason_codes: List[str] = []
