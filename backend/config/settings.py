@@ -5,6 +5,8 @@ class Settings:
     SESSION_TTL_SECONDS: int = int(os.getenv("SESSION_TTL_SECONDS", "3600"))
     MATCH_THRESHOLD: float = float(os.getenv("MATCH_THRESHOLD", "0.85"))
     MANUAL_REVIEW_THRESHOLD: float = float(os.getenv("MANUAL_REVIEW_THRESHOLD", "0.70"))
+    MIN_IMAGE_WIDTH: int = int(os.getenv("MIN_IMAGE_WIDTH", "200"))
+    MIN_IMAGE_HEIGHT: int = int(os.getenv("MIN_IMAGE_HEIGHT", "200"))
     
     @property
     def CORS_ORIGINS(self):
