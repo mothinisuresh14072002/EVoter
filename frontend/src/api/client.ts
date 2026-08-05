@@ -11,9 +11,11 @@ export async function uploadAadhaar(file: File) {
     return res.json();
 }
 
-export async function captureLive(fileOrBlob: Blob | File) {
+export async function captureLive(blobs: Blob[]) {
     const formData = new FormData();
-    formData.append('file', fileOrBlob, 'capture.jpg');
+    blobs.forEach((blob, i) => {
+        formData.append('files', blob, `capture_${i}.jpg`);
+    });
     
     const res = await fetch(`${API_BASE}/capture-live`, {
         method: 'POST',

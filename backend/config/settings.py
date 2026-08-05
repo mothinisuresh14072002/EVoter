@@ -8,6 +8,8 @@ class Settings:
     MIN_IMAGE_WIDTH: int = int(os.getenv("MIN_IMAGE_WIDTH", "200"))
     MIN_IMAGE_HEIGHT: int = int(os.getenv("MIN_IMAGE_HEIGHT", "200"))
     FACE_DETECTION_MODEL_PATH: str = os.getenv("FACE_DETECTION_MODEL_PATH", "models/scrfd_500m.onnx")
+    FACE_EMBEDDING_MODEL_PATH: str = os.getenv("FACE_EMBEDDING_MODEL_PATH", "models/adaface_ir50.onnx")
+    LIVENESS_MODEL_PATH: str = os.getenv("LIVENESS_MODEL_PATH", "models/silent_face.onnx")
     
     @property
     def CORS_ORIGINS(self):

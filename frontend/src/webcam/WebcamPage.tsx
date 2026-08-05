@@ -10,6 +10,8 @@ export function WebcamPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [hasCameraError, setHasCameraError] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     // Start camera automatically
@@ -33,50 +35,82 @@ export function WebcamPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
     };
   }, []);
 
-  const handleCapture = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    setStatus('Capturing and verifying...');
-    setError('');
-    
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    // Set canvas dimensions to match the actual video stream
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Draw current frame to canvas
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to JPEG blob
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setError('Failed to process camera image.');
-        setStatus('');
+  const captureSingleFrame = async (): Promise<Blob | null> => {
+    return new Promise(resolve => {
+      if (!videoRef.current || !canvasRef.current) {
+        resolve(null);
         return;
       }
       
-      try {
-        const result = await captureLive(blob);
-        if (result.status === 'success') {
-          // Stop camera properly before proceeding
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-          }
-          onSuccess(result.session_id);
-        } else {
-          setError(`Failed: ${result.reason_codes.join(', ')}`);
-          setStatus('');
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.9);
+    });
+  };
+
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const handleCaptureSequence = async () => {
+    setIsCapturing(true);
+    setError('');
+    
+    const numFrames = 5;
+    const blobs: Blob[] = [];
+
+    // Capture multiple frames with a small delay between them
+    for (let i = 0; i < numFrames; i++) {
+      setStatus(`Capturing frame ${i + 1} of ${numFrames}...`);
+      setProgress(((i + 1) / numFrames) * 100);
+      
+      const blob = await captureSingleFrame();
+      if (blob) {
+        blobs.push(blob);
+      }
+      
+      if (i < numFrames - 1) {
+        await delay(200); // 200ms gap between frames ensures distinct variations
+      }
+    }
+
+    if (blobs.length === 0) {
+      setError('Failed to extract any frames from camera.');
+      setStatus('');
+      setIsCapturing(false);
+      setProgress(0);
+      return;
+    }
+    
+    setStatus('Analyzing frames on server to select the best one...');
+    
+    try {
+      const result = await captureLive(blobs);
+      if (result.status === 'success') {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
         }
-      } catch (e) {
-        setError('Network error uploading live image');
+        onSuccess(result.session_id);
+      } else {
+        setError(`Failed: ${result.reason_codes.join(', ')}`);
         setStatus('');
       }
-    }, 'image/jpeg', 0.9);
+    } catch (e) {
+      setError('Network error uploading live frames');
+      setStatus('');
+    }
+    
+    setIsCapturing(false);
+    setProgress(0);
   };
 
   return (
@@ -102,14 +136,21 @@ export function WebcamPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
           <p>Camera access denied. Please grant permission in your browser and reload.</p>
         </div>
       )}
+
+      {/* Progress Bar Display */}
+      {isCapturing && progress > 0 && progress <= 100 && (
+        <div style={{ marginTop: '15px', width: '100%', maxWidth: '400px', margin: '15px auto 0', backgroundColor: '#eee', height: '10px', borderRadius: '5px' }}>
+            <div style={{ width: `${progress}%`, backgroundColor: '#4CAF50', height: '10px', borderRadius: '5px', transition: 'width 0.2s' }}></div>
+        </div>
+      )}
       
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
         <button 
-          onClick={handleCapture} 
-          disabled={status === 'Capturing and verifying...' || hasCameraError || !stream}
+          onClick={handleCaptureSequence} 
+          disabled={isCapturing || hasCameraError || !stream}
           style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer' }}
         >
-          Capture & Verify
+          {isCapturing ? 'Processing...' : 'Capture Sequence & Verify'}
         </button>
       </div>
       

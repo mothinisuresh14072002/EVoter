@@ -9,6 +9,7 @@ class QualityResult:
     is_acceptable: bool
     metrics: Dict[str, float]
     reason_codes: List[str] = field(default_factory=list)
+    overall_score: float = 0.0
 
 def check_quality(
     image: np.ndarray, 
@@ -74,8 +75,15 @@ def check_quality(
     
     is_acceptable = len(reasons) == 0
     
+    # Calculate overall score heavily weighted by sharpness (blur_score).
+    # Penalize the score significantly if brightness is out of bounds.
+    score = float(blur_score)
+    if not is_acceptable and ("too_dark" in reasons or "too_bright" in reasons):
+        score *= 0.5
+    
     return QualityResult(
         is_acceptable=is_acceptable,
         metrics=metrics,
-        reason_codes=reasons
+        reason_codes=reasons,
+        overall_score=score
     )
