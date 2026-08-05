@@ -32,12 +32,16 @@ def orchestrate_verification(reference_image: np.ndarray, live_image: np.ndarray
     ref_detection = detect_faces(reference_image)
     live_detection = detect_faces(live_image)
     
-    if not ref_detection.faces:
+    if ref_detection.error:
+        reason_codes.append(f"reference_{ref_detection.error}")
+    elif not ref_detection.faces:
         reason_codes.append("no_face_in_reference")
     elif len(ref_detection.faces) > 1:
         reason_codes.append("multiple_faces_in_reference")
         
-    if not live_detection.faces:
+    if live_detection.error:
+        reason_codes.append(f"live_{live_detection.error}")
+    elif not live_detection.faces:
         reason_codes.append("no_face_in_live")
     elif len(live_detection.faces) > 1:
         reason_codes.append("multiple_faces_in_live")
