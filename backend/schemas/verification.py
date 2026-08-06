@@ -6,8 +6,8 @@ class VerifyRequest(BaseModel):
     live_session_id: str
 
 class VerifyResponse(BaseModel):
-    session_id: str
-    status: Literal["match", "manual_review", "reject", "failed"]
+    request_id: str
+    status: Literal["verified", "manual_review", "failed"]
     confidence_score: Optional[float] = None
     liveness_result: Optional[str] = None
     quality_metrics: Dict[str, float] = {}

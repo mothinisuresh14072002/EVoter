@@ -17,7 +17,7 @@ async def verify(request: VerifyRequest):
     # 2. Verify sessions are not missing or expired
     if not ref_session or not live_session:
         return VerifyResponse(
-            session_id=request.live_session_id,
+            request_id=request.live_session_id,
             status="failed",
             reason_codes=["session_not_found_or_expired"],
             processing_time_ms=(time.time() - start_time) * 1000
@@ -28,7 +28,7 @@ async def verify(request: VerifyRequest):
     
     if ref_image is None or live_image is None:
         return VerifyResponse(
-            session_id=request.live_session_id,
+            request_id=request.live_session_id,
             status="failed",
             reason_codes=["invalid_session_data"],
             processing_time_ms=(time.time() - start_time) * 1000
@@ -41,10 +41,19 @@ async def verify(request: VerifyRequest):
     delete_session(request.reference_session_id)
     delete_session(request.live_session_id)
     
+    # Map internal statuses to strict EVoter contract
+    internal_status = result["status"]
+    if internal_status == "match":
+        api_status = "verified"
+    elif internal_status == "reject":
+        api_status = "failed"
+    else:
+        api_status = internal_status
+    
     # 5. Return structured response
     return VerifyResponse(
-        session_id=request.live_session_id,
-        status=result["status"],
+        request_id=request.live_session_id,
+        status=api_status,
         confidence_score=result.get("confidence_score"),
         liveness_result=result.get("liveness_result"),
         quality_metrics=result.get("quality_metrics", {}),

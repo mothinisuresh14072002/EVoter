@@ -64,7 +64,8 @@ def test_quality_face_too_small():
 def test_quality_face_not_centered():
     img = create_good_image()
     # Face in top left corner (not centered)
-    bbox = BoundingBox(x=0, y=0, width=50, height=50)
+    # width=30 keeps it above min_face_ratio (20%) but pushes the center (15,15) out of the 30% tolerance zone.
+    bbox = BoundingBox(x=0, y=0, width=30, height=30)
     result = check_quality(img, bbox=bbox)
     assert not result.is_acceptable
     assert "face_not_centered" in result.reason_codes
