@@ -1,26 +1,14 @@
 import React from 'react';
 
-export function FaceGuide() {
+export interface FaceGuideProps {
+  state?: 'idle' | 'scanning' | 'success' | 'error';
+}
+
+export function FaceGuide({ state = 'idle' }: FaceGuideProps) {
   return (
-    <div style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10
-    }}>
-      <div style={{
-        width: '200px',
-        height: '250px',
-        border: '3px dashed #00ff00',
-        borderRadius: '50%',
-        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
-      }}></div>
+    <div className={`face-guide-overlay ${state}`}>
+      <div className="face-guide-oval" />
+      <div className="face-guide-scanline" />
     </div>
   );
 }
