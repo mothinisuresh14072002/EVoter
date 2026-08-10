@@ -40,10 +40,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: var(--color-bg-dark);
-    --text-primary: var(--color-text-light);
-    --surface-bg: var(--color-surface-dark);
-    --border-color: rgba(255, 255, 255, 0.1);
+    --bg-primary: #ffffff;
+    --text-primary: var(--color-text-dark);
+    --surface-bg: rgba(255, 255, 255, 0.85);
+    --border-color: rgba(0, 0, 0, 0.08);
   }
 }
 
@@ -122,7 +122,7 @@ code {
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 1.5rem;
   flex: 1;
