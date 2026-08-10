@@ -15,7 +15,7 @@
   --color-text-primary: #1A202C;
   --color-text-secondary: #4A5568;
   --color-text-muted: #718096;
-  --color-bg: #F7F8FC;
+  --color-bg: #FFFFFF;
   --color-surface: #FFFFFF;
   --color-border: #E2E8F0;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -34,7 +34,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0F172A;
+    --color-bg: #FFFFFF;
     --color-surface: #1E293B;
     --color-text-primary: #F7FAFC;
     --color-text-secondary: #CBD5E0;
@@ -175,6 +175,30 @@ html, body {
   font-size: 11px;
   color: var(--color-text-muted);
   font-weight: 500;
+}
+
+.header-actions-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.header-link:hover {
+  color: var(--color-navy);
 }
 
 .official-badge {

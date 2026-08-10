@@ -43,9 +43,16 @@ function AppShell({ children }: { children: React.ReactNode }) {
               <p>Face Verification Demo</p>
             </div>
           </div>
-          <div className="official-badge">
-            <span className="official-badge-dot" />
-            Secure Demo Portal
+          <div className="header-actions-container">
+            <nav className="header-nav">
+              <a href="#" className="header-link">Developer Tools</a>
+              <a href="#" className="header-link">Settings</a>
+              <a href="#" className="header-link">Help</a>
+            </nav>
+            <div className="official-badge">
+              <span className="official-badge-dot" />
+              Secure Demo Portal
+            </div>
           </div>
         </div>
       </header>

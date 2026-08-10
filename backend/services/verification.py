@@ -91,9 +91,9 @@ def orchestrate_verification(reference_image: np.ndarray, live_image: np.ndarray
     status = evaluate_similarity(similarity)
     
     # Anti-Spoofing Rule: Block a 'match' if liveness is not guaranteed.
-    # Send to manual_review instead of outright rejecting, allowing operators to verify.
+    # Reject outright instead of allowing manual review to prevent fraud.
     if status == "match" and not liveness.is_live:
-        status = "manual_review"
+        status = "reject"
         
     if status != "match":
         reason_codes.append("low_similarity_or_spoof")

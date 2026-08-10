@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 
+// If this endpoint is opened directly in a browser, return to the sign-in UI
+// instead of exposing a method-not-allowed page.
+export async function GET(request: Request) {
+  return NextResponse.redirect(new URL('/auth/digilocker', request.url));
+}
+
 export async function POST(request: Request) {
   // In a real application, this would interface securely with DigiLocker's OAuth API.
   // For the MVP prototype, we mock the verification and return an anonymous voting credential.
@@ -10,15 +16,15 @@ export async function POST(request: Request) {
 
   // Basic validation mock
   if (!aadhaar || !pin) {
-    return NextResponse.redirect(new URL('/auth/digilocker?error=missing_fields', request.url));
+    return NextResponse.json(
+      { error: 'Please enter your Aadhaar number and security PIN.' },
+      { status: 400 }
+    );
   }
 
-  // Mock successful verification
-  // Instead of storing identity, we generate a cryptographically secure anonymous credential (token)
-  // that can only be used once for the current active election.
-  
-  // Set a secure HttpOnly cookie for the voting session
-  const response = NextResponse.redirect(new URL('/dashboard', request.url));
+  // Mock successful verification. Return JSON so the client can navigate after
+  // the cookie has been set instead of trying to handle a fetch redirect.
+  const response = NextResponse.json({ success: true });
   
   // Fake token representing the anonymous voting credential
   const mockVoterCredential = 'voter_cred_' + Math.random().toString(36).substring(2, 15);

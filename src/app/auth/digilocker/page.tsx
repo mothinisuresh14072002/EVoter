@@ -45,21 +45,16 @@ export default function DigiLockerAuth() {
       const res = await fetch("/api/auth/verify", {
         method: "POST",
         body: formData,
-        redirect: "manual",
       });
-
-      if (res.status === 0 || res.redirected) {
-        window.location.href = res.url || "/dashboard";
-        return;
-      }
 
       if (res.ok) {
         router.push("/dashboard");
       } else {
-        setError("Authentication failed. Please check your credentials and try again.");
+        const body = await res.json().catch(() => null);
+        setError(body?.error || "Authentication failed. Please check your credentials and try again.");
       }
-    } catch (err) {
-      setError("Network error. Please check your connection and try again.");
+    } catch {
+      setError("Unable to sign in right now. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }

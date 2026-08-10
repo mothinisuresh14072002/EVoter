@@ -53,12 +53,25 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    const cookieMatch = document.cookie.includes("evoter_session");
-    setSessionOk(cookieMatch);
-    if (!cookieMatch) {
-      const timer = setTimeout(() => router.push("/auth/digilocker"), 200);
-      return () => clearTimeout(timer);
-    }
+    let cancelled = false;
+
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { authenticated: false }))
+      .then(({ authenticated }) => {
+        if (cancelled) return;
+        setSessionOk(authenticated);
+        if (!authenticated) router.push("/auth/digilocker");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSessionOk(false);
+          router.push("/auth/digilocker");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   useEffect(() => {
