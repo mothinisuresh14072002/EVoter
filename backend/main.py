@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
 from backend.config.settings import settings
-from backend.api import aadhaar, live_capture, verify
+from backend.api import aadhaar, live_capture, verify, admin
 from backend.utils.session_store import clear_expired_sessions
 
 @asynccontextmanager
@@ -31,6 +31,7 @@ app.add_middleware(
 app.include_router(aadhaar.router)
 app.include_router(live_capture.router)
 app.include_router(verify.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def read_root():

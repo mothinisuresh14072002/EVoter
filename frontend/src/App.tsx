@@ -46,9 +46,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="header-actions-container">
             <nav className="header-nav">
-              <a href="#" className="header-link">Developer Tools</a>
-              <a href="#" className="header-link">Settings</a>
-              <a href="#" className="header-link">Help</a>
+              <a href="/info?section=help" className="header-link">Help</a>
             </nav>
             <div className="official-badge">
               <span className="official-badge-dot" />
