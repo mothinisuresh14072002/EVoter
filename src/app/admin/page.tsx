@@ -7,7 +7,9 @@ interface Candidate {
   id: string;
   name: string;
   party: string;
-  votes?: int;
+  place?: string;
+  district?: string;
+  votes?: number;
 }
 
 export default function AdminPortal() {
@@ -15,6 +17,8 @@ export default function AdminPortal() {
   const [tally, setTally] = useState<Candidate[]>([]);
   const [name, setName] = useState('');
   const [party, setParty] = useState('');
+  const [place, setPlace] = useState('');
+  const [district, setDistrict] = useState('');
   const [error, setError] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
@@ -32,7 +36,9 @@ export default function AdminPortal() {
     try {
       const res = await fetch('http://localhost:8000/admin/candidates');
       const data = await res.json();
-      setCandidates(data);
+      if (Array.isArray(data)) {
+        setCandidates(data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -42,7 +48,11 @@ export default function AdminPortal() {
     try {
       const res = await fetch('http://localhost:8000/admin/tally');
       const data = await res.json();
-      setTally(data);
+      if (Array.isArray(data)) {
+        setTally(data);
+      } else {
+        setTally([]);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -76,19 +86,21 @@ export default function AdminPortal() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !party) {
-      setError('Please fill in both name and party.');
+    if (!name || !party || !place || !district) {
+      setError('Please fill in all fields (name, party, place, district).');
       return;
     }
     try {
       const res = await fetch('http://localhost:8000/admin/candidates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, party })
+        body: JSON.stringify({ name, party, place, district })
       });
       if (res.ok) {
         setName('');
         setParty('');
+        setPlace('');
+        setDistrict('');
         setError('');
         fetchCandidates();
         fetchTally();
@@ -164,6 +176,28 @@ export default function AdminPortal() {
                 style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
               />
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <label htmlFor="place" style={{ marginBottom: '0.25rem', fontWeight: 600 }}>Place/Constituency</label>
+              <input 
+                id="place"
+                value={place} 
+                onChange={(e) => setPlace(e.target.value)} 
+                type="text" 
+                placeholder="e.g. Central City" 
+                style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <label htmlFor="district" style={{ marginBottom: '0.25rem', fontWeight: 600 }}>District</label>
+              <input 
+                id="district"
+                value={district} 
+                onChange={(e) => setDistrict(e.target.value)} 
+                type="text" 
+                placeholder="e.g. North District" 
+                style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
+              />
+            </div>
             <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
               Register
             </button>
@@ -181,7 +215,7 @@ export default function AdminPortal() {
                 <li key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid var(--border-color)' }}>
                   <div>
                     <strong style={{ display: 'block', color: 'var(--text-primary)' }}>{c.name}</strong>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.party}</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.party} &bull; {c.place}, {c.district}</span>
                   </div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-green)' }}>
                     {c.votes}

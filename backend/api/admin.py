@@ -10,7 +10,12 @@ async def register_candidate(candidate: CandidateCreate):
     """
     Register a new candidate.
     """
-    new_candidate = election_store.add_candidate(candidate.name, candidate.party)
+    new_candidate = election_store.add_candidate(
+        candidate.name, 
+        candidate.party, 
+        candidate.place, 
+        candidate.district
+    )
     return new_candidate
 
 @router.get("/candidates", response_model=List[CandidateResponse])

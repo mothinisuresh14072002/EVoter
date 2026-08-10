@@ -10,13 +10,15 @@ class ElectionStore:
         self.tally: Dict[str, int] = {}
         self.lock = threading.Lock()
 
-    def add_candidate(self, name: str, party: str) -> dict:
+    def add_candidate(self, name: str, party: str, place: str, district: str) -> dict:
         with self.lock:
             candidate_id = str(uuid.uuid4())
             candidate = {
                 "id": candidate_id,
                 "name": name,
-                "party": party
+                "party": party,
+                "place": place,
+                "district": district
             }
             self.candidates[candidate_id] = candidate
             self.tally[candidate_id] = 0
@@ -35,6 +37,8 @@ class ElectionStore:
                     "id": cid,
                     "name": candidate["name"],
                     "party": candidate["party"],
+                    "place": candidate.get("place", ""),
+                    "district": candidate.get("district", ""),
                     "votes": self.tally.get(cid, 0)
                 })
             # Sort by highest votes
