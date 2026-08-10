@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InfoTabs } from '../components/InfoTabs';
 
 export function InfoCentre() {
   const [activeTab, setActiveTab] = useState('privacy');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    if (section && ['privacy', 'security', 'terms', 'help', 'contact'].includes(section)) {
+      setActiveTab(section);
+    }
+  }, []);
 
   return (
     <div className="info-centre-page fade-in" style={{ padding: '2rem 0' }}>

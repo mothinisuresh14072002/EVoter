@@ -67,10 +67,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
             Sessions are ephemeral and auto-deleted after verification.
           </p>
           <div className="footer-links">
-            <a href="/info">Privacy</a>
-            <a href="/info">Security</a>
-            <a href="/info">Help</a>
-            <a href="/info">Contact</a>
+            <a href="/info?section=privacy">Privacy Policy</a>
+            <a href="/info?section=security">Security</a>
+            <a href="/info?section=terms">Terms of Service</a>
+            <a href="/info?section=help">Help Centre</a>
+            <a href="/info?section=contact">Contact</a>
           </div>
         </div>
       </footer>
