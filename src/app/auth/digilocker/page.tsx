@@ -9,14 +9,37 @@ export default function DigiLockerAuth() {
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
 
-  const [aadhaar, setAadhaar] = useState("");
+  const [rawAadhaar, setRawAadhaar] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(queryError ? "Invalid credentials. Please try again." : null);
 
-  const formatAadhaar = (val: string) => {
-    const digits = val.replace(/\D/g, "").slice(0, 12);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
+  const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\s/g, "");
+    let newRaw = "";
+    let rawIndex = 0;
+
+    for (let i = 0; i < val.length; i++) {
+      if (val[i] === "•" || val[i] === "*") {
+        if (rawIndex < rawAadhaar.length) {
+          newRaw += rawAadhaar[rawIndex];
+          rawIndex++;
+        }
+      } else if (/\d/.test(val[i])) {
+        newRaw += val[i];
+      }
+    }
+    
+    setRawAadhaar(newRaw.slice(0, 12));
+  };
+
+  const getMaskedAadhaar = (raw: string) => {
+    return raw
+      .split("")
+      .map((char, index) => (index < 6 ? "•" : char))
+      .join("")
+      .replace(/(.{4})/g, "$1 ")
+      .trim();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +47,7 @@ export default function DigiLockerAuth() {
     setError(null);
     setLoading(true);
 
-    const cleanAadhaar = aadhaar.replace(/\s/g, "");
+    const cleanAadhaar = rawAadhaar;
 
     if (cleanAadhaar.length !== 12) {
       setError("Please enter a valid 12-digit Aadhaar number.");
@@ -139,11 +162,12 @@ export default function DigiLockerAuth() {
               type="text"
               id="aadhaar"
               className={`form-input ${error?.includes("Aadhaar") ? "form-input-error" : ""}`}
-              placeholder="Enter 12-digit Aadhaar number"
-              value={aadhaar}
-              onChange={(e) => setAadhaar(formatAadhaar(e.target.value))}
+              placeholder="please enter aadhaar number"
+              value={getMaskedAadhaar(rawAadhaar)}
+              onChange={handleAadhaarChange}
               inputMode="numeric"
-              autoComplete="off"
+              name="aadhaar_input_field"
+              autoComplete="new-password"
               required
             />
             <div className="form-hint" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
@@ -163,11 +187,12 @@ export default function DigiLockerAuth() {
               type="password"
               id="pin"
               className={`form-input ${error?.includes("PIN") ? "form-input-error" : ""}`}
-              placeholder="6-digit DigiLocker PIN"
+              placeholder="please enter the digilock pin"
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
               inputMode="numeric"
-              autoComplete="off"
+              name="pin_input_field"
+              autoComplete="new-password"
               required
             />
             <div className="form-hint">
@@ -175,22 +200,7 @@ export default function DigiLockerAuth() {
             </div>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="alert alert-info" style={{ marginBottom: "1.75rem" }}>
-            <div className="alert-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-            </div>
-            <div className="alert-content">
-              <div className="alert-title">Demo Credentials</div>
-              <p className="alert-text">
-                Aadhaar: <code>1234 5678 9012</code> &nbsp;|&nbsp; PIN: <code>123456</code>
-              </p>
-            </div>
-          </div>
+
 
           <button
             type="submit"
