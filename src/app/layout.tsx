@@ -82,11 +82,11 @@ export default function RootLayout({
           </main>
           <footer className="app-footer animate-fade-in">
             <div className="footer-links">
-              <a href="/privacy">Privacy Policy</a>
-              <a href="/security">Security</a>
-              <a href="/terms">Terms of Service</a>
-              <a href="/help">Help Centre</a>
-              <a href="/contact">Contact</a>
+              <a href="/info?tab=privacy">Privacy Policy</a>
+              <a href="/info?tab=security">Security</a>
+              <a href="/info?tab=terms">Terms of Service</a>
+              <a href="/info?tab=help">Help Centre</a>
+              <a href="/info?tab=contact">Contact</a>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

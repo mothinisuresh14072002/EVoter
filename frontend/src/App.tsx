@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UploadPage } from './upload/UploadPage';
 import { WebcamPage } from './webcam/WebcamPage';
 import { ResultPage } from './results/ResultPage';
+import { InfoCentre } from './pages/InfoCentre';
 
 const AshokaChakra = () => (
   <svg viewBox="0 0 24 24" className="brand-chakra" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -66,10 +67,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
             Sessions are ephemeral and auto-deleted after verification.
           </p>
           <div className="footer-links">
-            <a href="#">Privacy</a>
-            <a href="#">Security</a>
-            <a href="#">Help</a>
-            <a href="#">Contact</a>
+            <a href="/info">Privacy</a>
+            <a href="/info">Security</a>
+            <a href="/info">Help</a>
+            <a href="/info">Contact</a>
           </div>
         </div>
       </footer>
@@ -136,6 +137,22 @@ export default function App() {
     setLiveSessionId(null);
     setStep(1);
   };
+
+  const [route, setRoute] = useState(window.location.pathname);
+
+  React.useEffect(() => {
+    const handlePopState = () => setRoute(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  if (route === '/info') {
+    return (
+      <AppShell>
+        <InfoCentre />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
