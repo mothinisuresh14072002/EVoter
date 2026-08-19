@@ -19,9 +19,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Existing lint violations are tracked separately; production build remains blocking.
-      - name: Lint (non-blocking during cleanup)
-        run: npm run lint || true
+      - name: Lint
+        run: npm run lint
       - name: Production build
         run: npm run build
 
