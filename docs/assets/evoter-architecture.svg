@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#F7FAFD"/>
+      <stop offset="1" stop-color="#EEF3F8"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#16324F" flood-opacity=".12"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#6B8299"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="780" rx="28" fill="url(#bg)"/>
+  <text x="70" y="74" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="800" fill="#0B2340">EVoter — Architecture</text>
+  <text x="70" y="108" font-family="Inter,Arial,sans-serif" font-size="18" fill="#60758A">Identity verification is isolated from the ballot workflow by design.</text>
+
+  <g filter="url(#s)">
+    <rect x="90" y="166" width="360" height="180" rx="24" fill="#FFFFFF"/>
+    <rect x="90" y="166" width="360" height="12" rx="6" fill="#FF9933"/>
+    <text x="122" y="220" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#A65300">FRONTEND</text>
+    <text x="122" y="255" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" fill="#0B2340">Next.js Web App</text>
+    <text x="122" y="290" font-family="Inter,Arial,sans-serif" font-size="17" fill="#52677B">auth • dashboard • vote</text>
+    <text x="122" y="318" font-family="Inter,Arial,sans-serif" font-size="17" fill="#52677B">receipt • admin • info</text>
+
+    <rect x="520" y="166" width="360" height="180" rx="24" fill="#FFFFFF"/>
+    <rect x="520" y="166" width="360" height="12" rx="6" fill="#0B6E99"/>
+    <text x="552" y="220" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#0B6E99">IDENTITY SERVICE</text>
+    <text x="552" y="255" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" fill="#0B2340">FastAPI Verification</text>
+    <text x="552" y="290" font-family="Inter,Arial,sans-serif" font-size="17" fill="#52677B">upload-aadhaar • capture-live</text>
+    <text x="552" y="318" font-family="Inter,Arial,sans-serif" font-size="17" fill="#52677B">verify • health • typed states</text>
+
+    <rect x="950" y="166" width="360" height="180" rx="24" fill="#FFFFFF"/>
+    <rect x="950" y="166" width="360" height="12" rx="6" fill="#138808"/>
+    <text x="982" y="220" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#0C6B2E">BALLOT DOMAIN</text>
+    <text x="982" y="255" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" fill="#0B2340">Voting Workflow</text>
+    <text x="982" y="290" font-family="Inter,Arial,sans-serif" font-size="17" fill="#52677B">candidate selection • receipt</text>
+    <text x="982" y="318" font-family="Inter,Arial,sans-serif" font-size="17" fill="#52677B">must remain identity-decoupled</text>
+  </g>
+
+  <line x1="450" y1="256" x2="510" y2="256" stroke="#6B8299" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="880" y1="256" x2="940" y2="256" stroke="#6B8299" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="454" y="235" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#6B8299">session refs</text>
+  <text x="885" y="235" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#6B8299">status only</text>
+
+  <g filter="url(#s)">
+    <rect x="320" y="430" width="340" height="196" rx="24" fill="#FFFFFF"/>
+    <text x="352" y="478" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#0B6E99">COMPUTER VISION PIPELINE</text>
+    <text x="352" y="516" font-family="Inter,Arial,sans-serif" font-size="23" font-weight="800" fill="#0B2340">Face + Liveness</text>
+    <text x="352" y="551" font-family="Inter,Arial,sans-serif" font-size="16" fill="#52677B">• face detection</text>
+    <text x="352" y="579" font-family="Inter,Arial,sans-serif" font-size="16" fill="#52677B">• embedding similarity</text>
+    <text x="352" y="607" font-family="Inter,Arial,sans-serif" font-size="16" fill="#52677B">• quality + anti-spoof checks</text>
+
+    <rect x="740" y="430" width="340" height="196" rx="24" fill="#FFFFFF"/>
+    <text x="772" y="478" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#8C5A00">EPHEMERAL STATE</text>
+    <text x="772" y="516" font-family="Inter,Arial,sans-serif" font-size="23" font-weight="800" fill="#0B2340">TTL Session Store</text>
+    <text x="772" y="551" font-family="Inter,Arial,sans-serif" font-size="16" fill="#52677B">• temporary image/session state</text>
+    <text x="772" y="579" font-family="Inter,Arial,sans-serif" font-size="16" fill="#52677B">• expiry + cleanup</text>
+    <text x="772" y="607" font-family="Inter,Arial,sans-serif" font-size="16" fill="#52677B">• no ballot-choice linkage</text>
+  </g>
+
+  <line x1="650" y1="346" x2="515" y2="420" stroke="#6B8299" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="750" y1="346" x2="895" y2="420" stroke="#6B8299" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <rect x="120" y="688" width="1160" height="52" rx="18" fill="#0B2340"/>
+  <circle cx="155" cy="714" r="9" fill="#FF9933"/>
+  <circle cx="181" cy="714" r="9" fill="#FFFFFF"/>
+  <circle cx="207" cy="714" r="9" fill="#138808"/>
+  <text x="239" y="721" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">Privacy boundary: verification authorizes the voter; ballot selection remains a separate domain.</text>
+</svg>

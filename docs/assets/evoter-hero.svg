@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="520" viewBox="0 0 1400 520">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#071426"/>
+      <stop offset="0.55" stop-color="#0B2340"/>
+      <stop offset="1" stop-color="#12355B"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#FF9933"/>
+      <stop offset="0.5" stop-color="#F7F7F7"/>
+      <stop offset="1" stop-color="#138808"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="520" rx="32" fill="url(#bg)"/>
+  <circle cx="1200" cy="80" r="190" fill="#FF9933" opacity=".07"/>
+  <circle cx="1300" cy="430" r="250" fill="#138808" opacity=".08"/>
+  <circle cx="90" cy="470" r="220" fill="#2E6AA3" opacity=".08"/>
+
+  <rect x="72" y="58" width="178" height="38" rx="19" fill="#FFFFFF" opacity=".08"/>
+  <circle cx="94" cy="77" r="6" fill="#42D392"/>
+  <text x="110" y="83" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#D9E5F2">RESEARCH MVP</text>
+
+  <text x="72" y="185" font-family="Inter,Arial,sans-serif" font-size="76" font-weight="800" fill="#FFFFFF">EVoter</text>
+  <rect x="72" y="214" width="550" height="7" rx="3.5" fill="url(#accent)"/>
+  <text x="72" y="270" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="700" fill="#D8E7F6">Privacy-first digital voting prototype</text>
+  <text x="72" y="316" font-family="Inter,Arial,sans-serif" font-size="20" fill="#AFC3D8">Biometric identity proofing • ephemeral sessions • isolated ballot workflow</text>
+  <text x="72" y="350" font-family="Inter,Arial,sans-serif" font-size="20" fill="#AFC3D8">Next.js + React + TypeScript + FastAPI + OpenCV</text>
+
+  <g filter="url(#shadow)">
+    <rect x="72" y="395" width="188" height="58" rx="16" fill="#FF9933"/>
+    <text x="105" y="432" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#071426">VERIFY IDENTITY</text>
+    <rect x="275" y="395" width="188" height="58" rx="16" fill="#FFFFFF" opacity=".10"/>
+    <text x="321" y="432" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#FFFFFF">CAST VOTE</text>
+    <rect x="478" y="395" width="188" height="58" rx="16" fill="#138808"/>
+    <text x="509" y="432" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#FFFFFF">VERIFY RECEIPT</text>
+  </g>
+
+  <g transform="translate(845 74)" filter="url(#shadow)">
+    <rect width="445" height="370" rx="30" fill="#F9FBFD"/>
+    <rect x="28" y="26" width="389" height="48" rx="14" fill="#EAF0F6"/>
+    <circle cx="55" cy="50" r="12" fill="#0B2340"/>
+    <text x="78" y="57" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="800" fill="#0B2340">Secure voter session</text>
+
+    <rect x="28" y="102" width="184" height="108" rx="20" fill="#FFF2E5"/>
+    <text x="49" y="132" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#9B4C00">01 • IDENTITY</text>
+    <circle cx="77" cy="168" r="24" fill="#FF9933" opacity=".22"/>
+    <path d="M65 169c0-8 5-14 12-14s12 6 12 14v12H65z" fill="#FF9933"/>
+    <circle cx="77" cy="150" r="9" fill="#FF9933"/>
+    <text x="108" y="166" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#24384D">Temporary</text>
+    <text x="108" y="188" font-family="Inter,Arial,sans-serif" font-size="14" fill="#52677B">verification only</text>
+
+    <rect x="232" y="102" width="185" height="108" rx="20" fill="#EAF8EE"/>
+    <text x="253" y="132" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800" fill="#0C6B2E">02 • BALLOT</text>
+    <path d="M256 161h34l8 8v24h-42z" fill="#138808" opacity=".20"/>
+    <path d="M265 172l8 8 16-20" fill="none" stroke="#138808" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="306" y="166" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#24384D">Separated</text>
+    <text x="306" y="188" font-family="Inter,Arial,sans-serif" font-size="14" fill="#52677B">from identity</text>
+
+    <rect x="28" y="232" width="389" height="110" rx="20" fill="#0B2340"/>
+    <text x="51" y="265" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="800" fill="#83A4C4">PRIVACY BOUNDARY</text>
+    <text x="51" y="298" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Identity authorizes access.</text>
+    <text x="51" y="325" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">It never records ballot choice.</text>
+  </g>
+</svg>
