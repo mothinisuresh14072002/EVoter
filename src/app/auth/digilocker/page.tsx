@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function DigiLockerAuth() {
+function DigiLockerAuthInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
@@ -250,5 +250,13 @@ export default function DigiLockerAuth() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DigiLockerAuth() {
+  return (
+    <Suspense fallback={null}>
+      <DigiLockerAuthInner />
+    </Suspense>
   );
 }

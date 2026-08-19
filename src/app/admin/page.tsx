@@ -13,6 +13,7 @@ interface Candidate {
 }
 
 export default function AdminPortal() {
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [tally, setTally] = useState<Candidate[]>([]);
   const [name, setName] = useState('');
@@ -34,7 +35,7 @@ export default function AdminPortal() {
 
   const fetchCandidates = async () => {
     try {
-      const res = await fetch('http://localhost:8000/admin/candidates');
+      const res = await fetch(`${BACKEND_URL}/admin/candidates`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setCandidates(data);
@@ -46,7 +47,7 @@ export default function AdminPortal() {
 
   const fetchTally = async () => {
     try {
-      const res = await fetch('http://localhost:8000/admin/tally');
+      const res = await fetch(`${BACKEND_URL}/admin/tally`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setTally(data);
@@ -91,7 +92,7 @@ export default function AdminPortal() {
       return;
     }
     try {
-      const res = await fetch('http://localhost:8000/admin/candidates', {
+      const res = await fetch(`${BACKEND_URL}/admin/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, party, place, district })
