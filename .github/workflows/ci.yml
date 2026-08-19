@@ -19,8 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # The existing application has legacy lint violations that predate this deployment PR.
-      # Keep lint visible, but make the production build the blocking deployment check.
+      # Existing lint violations are tracked separately; production build remains blocking.
       - name: Lint (non-blocking during cleanup)
         run: npm run lint || true
       - name: Production build
@@ -36,4 +35,7 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
       - run: pip install -r backend/requirements.txt
-      - run: pytest backend/tests -q
+      - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest backend/tests -q
