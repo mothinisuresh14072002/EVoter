@@ -1,9 +1,11 @@
 name: CI
 
 on:
+  workflow_dispatch:
   pull_request:
+    branches: [main]
   push:
-    branches: [main, agent/deployment-readiness]
+    branches: [main]
 
 permissions:
   contents: read
@@ -38,3 +40,13 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest backend/tests -q
+
+  containers:
+    name: Production container builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build frontend image
+        run: docker build -t evoter-frontend:test .
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t evoter-backend:test .
