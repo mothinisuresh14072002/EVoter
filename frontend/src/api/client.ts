@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'http://192.168.1.183:8000';
 
 export interface UploadAadhaarResult {
   session_id: string;

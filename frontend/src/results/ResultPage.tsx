@@ -103,7 +103,7 @@ export function ResultPage({
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : 'Network error';
         setError(
-          `${msg}. Please verify that the backend is running on http://127.0.0.1:8000 and CORS is enabled.`
+          `${msg}. Please verify that the backend is running on http://192.168.1.183:8000 and CORS is enabled.`
         );
       } finally {
         if (!cancelled) setLoading(false);
