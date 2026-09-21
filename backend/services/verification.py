@@ -1,107 +1,107 @@
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, List
 from backend.services.face_detection import detect_faces
 from backend.services.face_alignment import align_face
 from backend.services.face_embedding import get_face_embedding
 from backend.services.similarity import compute_similarity, evaluate_similarity
 from backend.services.liveness import check_liveness
 from backend.services.quality import check_quality
-from backend.config.settings import settings
 
-def orchestrate_verification(reference_image: np.ndarray, live_image: np.ndarray) -> Dict[str, Any]:
+
+def _failure(reason_codes: List[str], liveness_result: str = "unknown", quality_metrics: Dict[str, float] | None = None) -> Dict[str, Any]:
+    return {
+        "status": "failed",
+        "confidence_score": 0.0,
+        "liveness_result": liveness_result,
+        "quality_metrics": quality_metrics or {},
+        "reason_codes": reason_codes,
+    }
+
+
+def orchestrate_multiframe_verification(reference_image: np.ndarray, live_images: List[np.ndarray]) -> Dict[str, Any]:
+    """Verify one reference against a controlled burst of live frames.
+
+    The burst must contain multiple independently decoded frames. Every frame must
+    contain exactly one face, pass quality checks, and pass the configured liveness
+    model. Identity similarity is computed from the mean normalized embedding.
     """
-    Orchestrates the entire face verification pipeline utilizing all underlying services.
-    """
-    reason_codes = []
-    
-    # 1. Face Detection (Run first to extract bounding boxes for downstream checks)
+    if len(live_images) < 3:
+        return _failure(["insufficient_live_frames"])
+
     ref_detection = detect_faces(reference_image)
-    live_detection = detect_faces(live_image)
-    
-    if ref_detection.error:
-        reason_codes.append(f"reference_{ref_detection.error}")
-    elif not ref_detection.faces:
-        reason_codes.append("no_face_in_reference")
-    elif len(ref_detection.faces) > 1:
-        reason_codes.append("multiple_faces_in_reference")
-        
-    if live_detection.error:
-        reason_codes.append(f"live_{live_detection.error}")
-    elif not live_detection.faces:
-        reason_codes.append("no_face_in_live")
-    elif len(live_detection.faces) > 1:
-        reason_codes.append("multiple_faces_in_live")
+    if ref_detection.error or len(ref_detection.faces) != 1:
+        return _failure(["invalid_reference_face"])
 
-    # If detection failed, we can't extract bounding boxes, exit early.
-    if reason_codes:
-        return {
-            "status": "failed",
-            "confidence_score": 0.0,
-            "liveness_result": "unknown",
-            "quality_metrics": {},
-            "reason_codes": reason_codes
-        }
-
-    # Extract Face Bounding Boxes
     ref_bbox = ref_detection.faces[0]
-    live_bbox = live_detection.faces[0]
-
-    # 2. Quality Check (Now utilizes bounding boxes)
     ref_quality = check_quality(reference_image, bbox=ref_bbox)
-    live_quality = check_quality(live_image, bbox=live_bbox)
-    
     if not ref_quality.is_acceptable:
-        reason_codes.extend([f"reference_{code}" for code in ref_quality.reason_codes])
-    if not live_quality.is_acceptable:
-        reason_codes.extend([f"live_{code}" for code in live_quality.reason_codes])
-        
-    # 3. Liveness Check (Now utilizes bounding box)
-    liveness = check_liveness(live_image, face_box=live_bbox)
-    if not liveness.is_live:
-        reason_codes.append(f"liveness_failed_{liveness.status}")
-        
-    # We DO NOT exit early here if liveness fails, so the manual review path is never skipped.
-    
-    # 4. Face Alignment
+        return _failure([f"reference_{c}" for c in ref_quality.reason_codes])
+
     ref_aligned = align_face(reference_image, ref_bbox)
-    live_aligned = align_face(live_image, live_bbox)
-    
-    # 5. Face Embedding
     ref_embedding = get_face_embedding(ref_aligned)
-    live_embedding = get_face_embedding(live_aligned)
-    
     if ref_embedding is None:
-        reason_codes.append("reference_embedding_failed")
-    if live_embedding is None:
-        reason_codes.append("live_embedding_failed")
-        
-    if "reference_embedding_failed" in reason_codes or "live_embedding_failed" in reason_codes:
-        return {
-            "status": "failed",
-            "confidence_score": 0.0,
-            "liveness_result": liveness.status,
-            "quality_metrics": live_quality.metrics,
-            "reason_codes": reason_codes
-        }
-    
-    # 6. Compute Similarity
-    similarity = compute_similarity(ref_embedding, live_embedding)
-    
-    # 7. Make Final Decision based on Configured Thresholds
+        return _failure(["reference_embedding_failed"])
+
+    embeddings = []
+    liveness_scores = []
+    quality_scores = []
+    reason_codes: List[str] = []
+
+    for index, image in enumerate(live_images):
+        detection = detect_faces(image)
+        if detection.error or len(detection.faces) != 1:
+            reason_codes.append(f"frame_{index}_face_invalid")
+            continue
+
+        bbox = detection.faces[0]
+        quality = check_quality(image, bbox=bbox)
+        if not quality.is_acceptable:
+            reason_codes.extend(f"frame_{index}_{c}" for c in quality.reason_codes)
+            continue
+
+        liveness = check_liveness(image, face_box=bbox)
+        if not liveness.is_live:
+            reason_codes.append(f"frame_{index}_liveness_{liveness.status}")
+            continue
+
+        aligned = align_face(image, bbox)
+        embedding = get_face_embedding(aligned)
+        if embedding is None:
+            reason_codes.append(f"frame_{index}_embedding_failed")
+            continue
+
+        embeddings.append(np.asarray(embedding, dtype=np.float32))
+        liveness_scores.append(float(liveness.score))
+        quality_scores.append(float(quality.overall_score))
+
+    if len(embeddings) < 3:
+        return _failure(["insufficient_valid_live_frames", *reason_codes], "spoof_or_uncertain")
+
+    mean_embedding = np.mean(np.stack(embeddings), axis=0)
+    norm = np.linalg.norm(mean_embedding)
+    if norm == 0:
+        return _failure(["live_embedding_invalid", *reason_codes])
+    mean_embedding = mean_embedding / norm
+
+    similarity = compute_similarity(ref_embedding, mean_embedding)
     status = evaluate_similarity(similarity)
-    
-    # Anti-Spoofing Rule: Block a 'match' if liveness is not guaranteed.
-    # Reject outright instead of allowing manual review to prevent fraud.
-    if status == "match" and not liveness.is_live:
-        status = "reject"
-        
     if status != "match":
-        reason_codes.append("low_similarity_or_spoof")
+        reason_codes.append("low_similarity")
 
     return {
-        "status": status,
-        "confidence_score": similarity,
-        "liveness_result": liveness.status,
-        "quality_metrics": live_quality.metrics,
-        "reason_codes": reason_codes
+        "status": "verified" if status == "match" else "reject",
+        "confidence_score": float(similarity),
+        "liveness_result": "live",
+        "liveness_score": float(np.mean(liveness_scores)),
+        "quality_metrics": {
+            "frames_received": len(live_images),
+            "frames_valid": len(embeddings),
+            "mean_quality_score": float(np.mean(quality_scores)),
+        },
+        "reason_codes": reason_codes,
     }
+
+
+def orchestrate_verification(reference_image: np.ndarray, live_image: np.ndarray) -> Dict[str, Any]:
+    """Backward-compatible single-frame verification path."""
+    return orchestrate_multiframe_verification(reference_image, [live_image, live_image, live_image])
