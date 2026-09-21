@@ -3,7 +3,7 @@ import os
 
 class Settings:
     MAX_IMAGE_MB: int = int(os.getenv("MAX_IMAGE_MB", "5"))
-    SESSION_TTL_SECONDS: int = int(os.getenv("SESSION_TTL_SECONDS", "3600"))
+    SESSION_TTL_SECONDS: int = int(os.getenv("SESSION_TTL_SECONDS", "300"))
     MATCH_THRESHOLD: float = float(os.getenv("MATCH_THRESHOLD", "0.85"))
     MANUAL_REVIEW_THRESHOLD: float = float(os.getenv("MANUAL_REVIEW_THRESHOLD", "0.70"))
     MIN_IMAGE_WIDTH: int = int(os.getenv("MIN_IMAGE_WIDTH", "200"))
@@ -13,6 +13,8 @@ class Settings:
     LIVENESS_MODEL_PATH: str = os.getenv("LIVENESS_MODEL_PATH", "models/silent_face.onnx")
     ADMIN_API_KEY: str = os.getenv("ADMIN_API_KEY", "")
     ENABLE_VOTE_MOCK: bool = os.getenv("ENABLE_VOTE_MOCK", "false").lower() == "true"
+    SESSION_STORE_BACKEND: str = os.getenv("SESSION_STORE_BACKEND", "memory").lower()
+    REDIS_URL: str = os.getenv("REDIS_URL", "")
 
     @property
     def CORS_ORIGINS(self):
@@ -21,3 +23,6 @@ class Settings:
 
 
 settings = Settings()
+
+if settings.SESSION_STORE_BACKEND == "redis" and not settings.REDIS_URL:
+    raise RuntimeError("REDIS_URL is required when SESSION_STORE_BACKEND=redis")
