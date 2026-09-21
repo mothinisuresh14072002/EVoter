@@ -1,5 +1,4 @@
 from typing import List
-
 from fastapi import APIRouter, UploadFile, File
 
 from backend.schemas.live_capture import CaptureLiveResponse
@@ -14,8 +13,7 @@ router = APIRouter()
 
 @router.post("/capture-live", response_model=CaptureLiveResponse)
 async def capture_live(files: List[UploadFile] = File(...)):
-    best_img = None
-    best_score = -1.0
+    candidates = []
     last_reason_codes = ["no_valid_frames"]
 
     for file in files:
@@ -27,40 +25,42 @@ async def capture_live(files: List[UploadFile] = File(...)):
 
         img = decode_image_bytes(image_bytes)
         detection = detect_faces(img)
-        if detection.error or not detection.faces or len(detection.faces) > 1:
+        if detection.error or len(detection.faces) != 1:
             last_reason_codes = ["face_detection_failed"]
             continue
 
         face_box = detection.faces[0]
         quality = check_quality(img, bbox=face_box)
         if quality.is_acceptable:
-            if quality.overall_score > best_score:
-                best_score = quality.overall_score
-                best_img = img
-                last_reason_codes = []
-        elif best_img is None:
+            candidates.append((quality.overall_score, img))
+        elif not candidates:
             last_reason_codes = quality.reason_codes
 
-    if best_img is None:
+    # A single still image is insufficient for production verification.
+    if len(candidates) < 3:
         return CaptureLiveResponse(
             session_id="",
             status="failed",
             liveness_result=None,
-            quality_metrics={},
-            reason_codes=["recapture_required"] + last_reason_codes,
+            quality_metrics={"frames_received": len(files), "frames_valid": len(candidates)},
+            reason_codes=["minimum_3_live_frames_required", *last_reason_codes],
         )
 
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    selected = [image for _, image in candidates[:5]]
     session_id = create_session(
-        {"image": best_img, "type": "live"},
+        {"images": selected, "type": "live", "frame_count": len(selected)},
         ttl_seconds=settings.SESSION_TTL_SECONDS,
     )
 
-    # Liveness is intentionally NOT claimed here. It is evaluated during /verify
-    # against the selected frame by the configured anti-spoofing model.
     return CaptureLiveResponse(
         session_id=session_id,
         status="success",
         liveness_result="not_evaluated",
-        quality_metrics={"overall_score": best_score},
+        quality_metrics={
+            "frames_received": len(files),
+            "frames_valid": len(candidates),
+            "frames_selected": len(selected),
+        },
         reason_codes=["liveness_pending_verification"],
     )
