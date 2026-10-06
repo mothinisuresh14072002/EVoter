@@ -30,7 +30,7 @@ export default function VotePage() {
         if (cancelled) return;
 
         if (!state.authenticated) {
-          router.replace("/auth/digilocker");
+          router.replace("/auth/demo");
           return;
         }
 
@@ -43,7 +43,7 @@ export default function VotePage() {
       })
       .catch(() => {
         if (!cancelled) {
-          router.replace("/auth/digilocker");
+          router.replace("/auth/demo");
         }
       });
 
