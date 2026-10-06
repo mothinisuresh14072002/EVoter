@@ -1,8 +1,27 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+import { createSignedSession, verifySignedSession } from "@/lib/session";
 
 const BACKEND_URL = (process.env.BACKEND_INTERNAL_URL || "http://localhost:8000").replace(/\/$/, "");
 
 export async function POST(request: Request) {
+  const cookieStore = await cookies();
+
+  try {
+    if (!verifySignedSession(cookieStore.get("evoter_session")?.value, "voter")) {
+      return NextResponse.json(
+        { error: "A valid demo voter session is required." },
+        { status: 401 },
+      );
+    }
+  } catch {
+    return NextResponse.json(
+      { error: "Demo session signing is not configured." },
+      { status: 503 },
+    );
+  }
+
   let payload: { reference_session_id?: string; live_session_id?: string };
 
   try {
@@ -43,7 +62,7 @@ export async function POST(request: Request) {
 
     response.cookies.set({
       name: "evoter_biometric",
-      value: crypto.randomUUID(),
+      value: createSignedSession("biometric", 60 * 5),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -54,7 +73,7 @@ export async function POST(request: Request) {
     return response;
   } catch {
     return NextResponse.json(
-      { error: "Biometric verification service is unavailable." },
+      { error: "Biometric verification service is unavailable or not configured." },
       { status: 503 },
     );
   }
