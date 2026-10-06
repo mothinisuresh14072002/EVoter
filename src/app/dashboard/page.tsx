@@ -60,12 +60,12 @@ export default function Dashboard() {
       .then(({ authenticated }) => {
         if (cancelled) return;
         setSessionOk(authenticated);
-        if (!authenticated) router.push("/auth/digilocker");
+        if (!authenticated) router.push("/auth/demo");
       })
       .catch(() => {
         if (!cancelled) {
           setSessionOk(false);
-          router.push("/auth/digilocker");
+          router.push("/auth/demo");
         }
       });
 
