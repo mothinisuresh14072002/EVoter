@@ -73,3 +73,13 @@ def clear_expired_sessions() -> None:
     expired_keys = [k for k, v in _store.items() if now > v["expires_at"]]
     for key in expired_keys:
         del _store[key]
+
+
+def session_store_ready() -> bool:
+    if settings.SESSION_STORE_BACKEND != "redis":
+        return True
+
+    try:
+        return bool(_get_redis().ping())
+    except Exception:
+        return False
