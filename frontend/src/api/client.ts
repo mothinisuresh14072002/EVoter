@@ -6,7 +6,7 @@ export interface LiveChallenge {
   expires_in_seconds: number;
 }
 
-export interface UploadAadhaarResult {
+export interface UploadReferenceResult {
   session_id: string;
   status: string;
   quality_metrics?: Record<string, number>;
@@ -46,10 +46,10 @@ async function parseResponse<T>(res: Response, action: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function uploadReference(file: File): Promise<UploadAadhaarResult> {
+export async function uploadReference(file: File): Promise<UploadReferenceResult> {
   const formData = new FormData();
   formData.append("file", file);
-  return parseResponse<UploadAadhaarResult>(
+  return parseResponse<UploadReferenceResult>(
     await fetch(`${API_BASE}/upload-reference`, {
       method: "POST",
       body: formData,
