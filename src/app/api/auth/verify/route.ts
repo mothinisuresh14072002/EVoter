@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createSignedSession } from "@/lib/session";
 
 export async function GET(request: Request) {
-  return NextResponse.redirect(new URL("/auth/digilocker", request.url));
+  return NextResponse.redirect(new URL("/auth/demo", request.url));
 }
 
 export async function POST(request: Request) {
