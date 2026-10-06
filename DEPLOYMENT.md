@@ -24,7 +24,7 @@ Next.js :3000
                             +--> ONNX model files
 ```
 
-In Docker Compose, FastAPI is bound to `127.0.0.1:8000` on the host. Redis is not published.
+In Docker Compose, Next.js and FastAPI are bound to `127.0.0.1` on the host (`3000` and `8000`). Redis is not published. Put a reverse proxy in front for public HTTPS exposure.
 
 ## 1. Server prerequisites
 
@@ -138,7 +138,13 @@ docker compose logs --tail=100 redis
 
 ## 8. Health and readiness
 
-Liveness check:
+Frontend health check:
+
+```bash
+curl http://127.0.0.1:3000/api/health
+```
+
+Backend liveness check:
 
 ```bash
 curl http://127.0.0.1:8000/health
@@ -152,7 +158,7 @@ curl -i http://127.0.0.1:8000/ready
 
 `/ready` returns HTTP 503 until Redis is reachable and all three configured model files exist.
 
-The frontend service waits for backend readiness before starting.
+The frontend service waits for backend readiness before starting and has its own `/api/health` container healthcheck.
 
 ## 9. Open locally
 
@@ -173,8 +179,8 @@ Expose **only the Next.js application** through your public reverse proxy. Do no
 Minimum reverse-proxy controls:
 
 - HTTPS
-- request/body-size limits
-- rate limiting for `/api/`
+- request/body-size limits (keep normal API requests small; allow a larger bounded body only for `/api/biometric/capture`)
+- rate limiting for `/api/`, with stricter login/admin-session limits
 - sensible connection/read timeouts
 - security logging that excludes request bodies
 - no caching of authentication/biometric API responses
@@ -186,7 +192,8 @@ Example Nginx configuration is provided at `deploy/nginx.evoter.conf.example`.
 Before publishing a demo URL, confirm:
 
 - [ ] `docker compose config` succeeds
-- [ ] `docker compose ps` reports healthy backend/Redis
+- [ ] `docker compose ps` reports healthy frontend/backend/Redis
+- [ ] `GET /api/health` returns HTTP 200
 - [ ] `GET /ready` returns HTTP 200
 - [ ] Next.js page loads through HTTPS
 - [ ] camera permission works in the target browser
@@ -198,6 +205,7 @@ Before publishing a demo URL, confirm:
 - [ ] submitting the demo ballot clears voter + biometric cookies
 - [ ] receipt is explicitly labeled non-binding
 - [ ] admin UI contains no browser-visible backend API key
+- [ ] Next.js port 3000 is loopback-bound and reached publicly only through the HTTPS reverse proxy
 - [ ] FastAPI port is not internet-exposed
 - [ ] Redis is not internet-exposed
 - [ ] secrets are not present in Git or logs

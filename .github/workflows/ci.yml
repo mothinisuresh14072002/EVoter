@@ -79,3 +79,15 @@ jobs:
         run: |
           test "$(docker image inspect evoter-frontend:test --format '{{.Config.User}}')" = "node"
           test "$(docker image inspect evoter-backend:test --format '{{.Config.User}}')" = "evoter"
+      - name: Smoke-test frontend runtime health
+        run: |
+          docker run -d --name evoter-frontend-smoke             -p 127.0.0.1:3000:3000             -e NODE_ENV=production             -e EVOTER_DEMO_MODE=true             -e SESSION_SIGNING_SECRET=ci-session-signing-secret-at-least-32-characters             -e ADMIN_UI_PASSWORD=ci-admin-password             -e ADMIN_API_KEY=ci-admin-api-key-at-least-32-characters             -e BACKEND_INTERNAL_URL=http://127.0.0.1:8000             evoter-frontend:test
+          trap 'docker rm -f evoter-frontend-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs evoter-frontend-smoke
+          exit 1
