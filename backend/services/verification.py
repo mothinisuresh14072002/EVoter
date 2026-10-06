@@ -84,12 +84,19 @@ def orchestrate_multiframe_verification(reference_image: np.ndarray, live_images
     mean_embedding = mean_embedding / norm
 
     similarity = compute_similarity(ref_embedding, mean_embedding)
-    status = evaluate_similarity(similarity)
-    if status != "match":
+    similarity_decision = evaluate_similarity(similarity)
+
+    if similarity_decision == "match":
+        verification_status = "verified"
+    elif similarity_decision == "manual_review":
+        verification_status = "manual_review"
+        reason_codes.append("similarity_requires_manual_review")
+    else:
+        verification_status = "failed"
         reason_codes.append("low_similarity")
 
     return {
-        "status": "verified" if status == "match" else "reject",
+        "status": verification_status,
         "confidence_score": float(similarity),
         "liveness_result": "live",
         "liveness_score": float(np.mean(liveness_scores)),
