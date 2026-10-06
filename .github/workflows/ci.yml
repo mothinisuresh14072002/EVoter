@@ -59,11 +59,23 @@ jobs:
         run: pytest backend/tests -q
 
   containers:
-    name: Production container builds
+    name: Production deployment validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validate Compose configuration
+        env:
+          SESSION_SIGNING_SECRET: ci-session-signing-secret-at-least-32-characters
+          ADMIN_UI_PASSWORD: ci-admin-password
+          ADMIN_API_KEY: ci-admin-api-key-at-least-32-characters
+        run: |
+          cp backend/.env.example backend/.env
+          docker compose config --quiet
       - name: Build frontend image
         run: docker build -t evoter-frontend:test .
       - name: Build backend image
         run: docker build -f backend/Dockerfile -t evoter-backend:test .
+      - name: Verify containers run as non-root
+        run: |
+          test "$(docker image inspect evoter-frontend:test --format '{{.Config.User}}')" = "node"
+          test "$(docker image inspect evoter-backend:test --format '{{.Config.User}}')" = "evoter"
