@@ -39,6 +39,7 @@ export interface WebcamPageProps {
 export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -58,6 +59,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
           s.getTracks().forEach((t) => t.stop());
           return;
         }
+        streamRef.current = s;
         setStream(s);
         if (videoRef.current) {
           videoRef.current.srcObject = s;
@@ -70,9 +72,9 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
 
     return () => {
       cancelled = true;
-      if (stream) stream.getTracks().forEach((track) => track.stop());
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const captureSingleFrame = async (): Promise<Blob | null> =>
@@ -144,7 +146,9 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
       if (result.status === 'success') {
         setGuideState('success');
         setStatus('Live capture accepted ✓');
-        if (stream) stream.getTracks().forEach((track) => track.stop());
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setStream(null);
         setTimeout(() => onSuccess(result.session_id), 600);
       } else {
         setGuideState('error');
