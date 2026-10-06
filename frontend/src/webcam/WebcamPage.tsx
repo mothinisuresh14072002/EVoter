@@ -118,7 +118,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
 
     for (let i = 0; i < numFrames; i++) {
       setFrameNumber(i + 1);
-      setStatus(`Challenge: ${activeChallenge.challenge === 'turn_left' ? 'turn your head LEFT' : 'turn your head RIGHT'} · frame ${i + 1} of ${numFrames}`);
+      setStatus(`Challenge: ${activeChallenge.challenge === 'turn_left' ? 'move toward the LEFT side of the frame' : 'move toward the RIGHT side of the frame'} · frame ${i + 1} of ${numFrames}`);
       setProgress(((i + 1) / numFrames) * 100);
 
       const blob = await captureSingleFrame();
@@ -215,7 +215,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
               <div className="progress-label">
                 <span>
                   {isCapturing && frameNumber > 0
-                    ? `Frame ${frameNumber} of 5`
+                    ? `Frame ${frameNumber} of 8`
                     : progress >= 100
                     ? 'Analyzing…'
                     : 'Preparing…'}
@@ -262,7 +262,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
         >
           {!isCapturing && <CameraIcon />}
           {isCapturing && <span className="spinner" />}
-          {isCapturing ? 'Capturing… do not move' : 'Start Camera Challenge'}
+          {isCapturing ? 'Capturing… follow the movement prompt' : 'Start Camera Challenge'}
         </button>
       </div>
 
