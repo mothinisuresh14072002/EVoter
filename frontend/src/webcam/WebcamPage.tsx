@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { captureLive } from '../api/client';
+import { captureLive, createLiveChallenge, type LiveChallenge } from '../api/client';
 import { StatusMessage } from '../components/StatusMessage';
 import { FaceGuide } from '../components/FaceGuide';
 
@@ -39,6 +39,7 @@ export interface WebcamPageProps {
 export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -47,6 +48,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
   const [progress, setProgress] = useState(0);
   const [frameNumber, setFrameNumber] = useState(0);
   const [guideState, setGuideState] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
+  const [challenge, setChallenge] = useState<LiveChallenge | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +59,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
           s.getTracks().forEach((t) => t.stop());
           return;
         }
+        streamRef.current = s;
         setStream(s);
         if (videoRef.current) {
           videoRef.current.srcObject = s;
@@ -69,9 +72,9 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
 
     return () => {
       cancelled = true;
-      if (stream) stream.getTracks().forEach((track) => track.stop());
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const captureSingleFrame = async (): Promise<Blob | null> =>
@@ -101,12 +104,23 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
     setError('');
     setGuideState('scanning');
 
-    const numFrames = 5;
+    let activeChallenge = challenge;
+    try {
+      activeChallenge = await createLiveChallenge();
+      setChallenge(activeChallenge);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Unable to start liveness challenge');
+      setIsCapturing(false);
+      setGuideState('error');
+      return;
+    }
+
+    const numFrames = 8;
     const blobs: Blob[] = [];
 
     for (let i = 0; i < numFrames; i++) {
       setFrameNumber(i + 1);
-      setStatus(`Capturing frame ${i + 1} of ${numFrames}… hold still`);
+      setStatus(`Challenge: ${activeChallenge.challenge === 'turn_left' ? 'move toward the LEFT side of the frame' : 'move toward the RIGHT side of the frame'} · frame ${i + 1} of ${numFrames}`);
       setProgress(((i + 1) / numFrames) * 100);
 
       const blob = await captureSingleFrame();
@@ -128,11 +142,13 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
     setStatus('Server analyzing frames — selecting the sharpest capture…');
 
     try {
-      const result = await captureLive(blobs);
+      const result = await captureLive(blobs, activeChallenge.challenge_id);
       if (result.status === 'success') {
         setGuideState('success');
         setStatus('Live capture accepted ✓');
-        if (stream) stream.getTracks().forEach((track) => track.stop());
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setStream(null);
         setTimeout(() => onSuccess(result.session_id), 600);
       } else {
         setGuideState('error');
@@ -161,7 +177,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
         <div>
           <h2 className="page-title" style={{ marginBottom: 0 }}>Step 2 · Live Selfie Capture</h2>
           <p className="page-subtitle" style={{ marginBottom: 0, marginTop: 4 }}>
-            The server selects the sharpest frame out of 5 and checks liveness + quality.
+            Follow the one-time server challenge, then the server checks temporal movement, liveness, quality, and identity.
           </p>
         </div>
         {onBack && (
@@ -203,7 +219,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
               <div className="progress-label">
                 <span>
                   {isCapturing && frameNumber > 0
-                    ? `Frame ${frameNumber} of 5`
+                    ? `Frame ${frameNumber} of 8`
                     : progress >= 100
                     ? 'Analyzing…'
                     : 'Preparing…'}
@@ -250,7 +266,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
         >
           {!isCapturing && <CameraIcon />}
           {isCapturing && <span className="spinner" />}
-          {isCapturing ? 'Capturing… do not move' : 'Capture 5 Frames & Verify'}
+          {isCapturing ? 'Capturing… follow the movement prompt' : 'Start Camera Challenge'}
         </button>
       </div>
 
@@ -260,7 +276,7 @@ export function WebcamPage({ onSuccess, onBack }: WebcamPageProps) {
         </div>
         <div className="info-strip-item">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-          Best of 5 frames
+          8-frame challenge
         </div>
         <div className="info-strip-item">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>

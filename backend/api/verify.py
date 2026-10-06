@@ -1,7 +1,7 @@
 import time
 from fastapi import APIRouter
 from backend.schemas.verification import VerifyRequest, VerifyResponse
-from backend.services.verification import orchestrate_verification
+from backend.services.verification import orchestrate_multiframe_verification
 from backend.utils.session_store import get_session, delete_session
 
 router = APIRouter()
@@ -19,11 +19,9 @@ def _failed_response(request_id: str, reason_code: str, start_time: float) -> Ve
 @router.post("/verify", response_model=VerifyResponse)
 async def verify(request: VerifyRequest):
     start_time = time.time()
-
     try:
         ref_session = get_session(request.reference_session_id)
         live_session = get_session(request.live_session_id)
-
         if not ref_session or not live_session:
             return _failed_response(request.live_session_id, "session_not_found_or_expired", start_time)
 
@@ -31,17 +29,14 @@ async def verify(request: VerifyRequest):
             return _failed_response(request.live_session_id, "invalid_session_type", start_time)
 
         ref_image = ref_session.get("image")
-        live_image = live_session.get("image")
-        if ref_image is None or live_image is None:
-            return _failed_response(request.live_session_id, "invalid_session_data", start_time)
+        live_images = live_session.get("images")
+        if ref_image is None or not isinstance(live_images, list) or len(live_images) < 3:
+            return _failed_response(request.live_session_id, "insufficient_live_frames", start_time)
 
-        result = orchestrate_verification(ref_image, live_image)
-        internal_status = result["status"]
-        api_status = "verified" if internal_status == "match" else "failed" if internal_status == "reject" else internal_status
-
+        result = orchestrate_multiframe_verification(ref_image, live_images)
         return VerifyResponse(
             request_id=request.live_session_id,
-            status=api_status,
+            status=result.get("status", "failed"),
             confidence_score=result.get("confidence_score"),
             liveness_result=result.get("liveness_result"),
             quality_metrics=result.get("quality_metrics", {}),

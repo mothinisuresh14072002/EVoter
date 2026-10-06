@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { uploadAadhaar } from '../api/client';
+import React, { useEffect, useRef, useState } from 'react';
+import { uploadReference } from '../api/client';
 import { StatusMessage } from '../components/StatusMessage';
 
 const UploadIcon = () => (
@@ -46,6 +46,12 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const chooseFile = () => inputRef.current?.click();
 
   const onFileChosen = (f: File | null) => {
@@ -55,8 +61,8 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
       setError('Please select a JPEG or PNG image file.');
       return;
     }
-    if (f.size > 10 * 1024 * 1024) {
-      setError('File size must be under 10 MB.');
+    if (f.size > 5 * 1024 * 1024) {
+      setError('File size must be under 5 MB.');
       return;
     }
     setFile(f);
@@ -71,7 +77,7 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
     setError('');
 
     try {
-      const result = await uploadAadhaar(file);
+      const result = await uploadReference(file);
       if (result.status === 'success') {
         setStatus('Reference image accepted ✓');
         setTimeout(() => onSuccess(result.session_id), 400);
@@ -98,11 +104,10 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
 
   return (
     <div className="glass-panel fade-in">
-      <h2 className="page-title">Step 1 · Upload Reference ID Photo</h2>
+      <h2 className="page-title">Step 1 · Upload Reference Portrait</h2>
       <p className="page-subtitle">
-        Upload a clear, front-facing photograph of your Aadhaar ID. The image is
-        processed in an ephemeral session and discarded immediately after
-        verification.
+        Upload a clear, front-facing portrait of the same consenting test participant
+        who will use the camera. Do not upload government IDs or sensitive documents.
       </p>
 
       <div className="alert alert-info">
@@ -110,7 +115,7 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
           <ShieldIcon />
         </div>
         <div className="alert-content">
-          <div className="alert-title">Zero-knowledge processing</div>
+          <div className="alert-title">Ephemeral processing</div>
           <div className="alert-desc">
             Images are never written to disk. Temp sessions are deleted
             automatically after /verify completes.
@@ -136,9 +141,9 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
           <UploadIcon />
         </div>
         <div className="dropzone-title">
-          {isDragging ? 'Drop image here' : 'Click or drag your Aadhaar photo'}
+          {isDragging ? 'Drop image here' : 'Click or drag a reference portrait'}
         </div>
-        <div className="dropzone-hint">JPG or PNG · up to 10 MB · front-facing, well-lit</div>
+        <div className="dropzone-hint">JPG or PNG · up to 5 MB · front-facing, well-lit</div>
         <button type="button" className="btn btn-outline" onClick={(e) => { e.stopPropagation(); chooseFile(); }}>
           Choose File
         </button>
@@ -181,7 +186,7 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
 
       <div className="info-strip">
         <div className="info-strip-item">
-          <LockIcon /> Encrypted in transit
+          <LockIcon /> Use HTTPS outside localhost
         </div>
         <div className="info-strip-item">
           <BoltIcon /> Validated server-side

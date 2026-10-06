@@ -1,68 +1,71 @@
 export const privacyContent = {
-  title: "Privacy Policy",
+  title: "Privacy Notes",
   content: [
-    "EVoter may process identity verification data, DigiLocker or Aadhaar-related verification data, phone/email if used, verification status, device/session metadata, and audit metadata.",
-    "EVoter does not collect raw phone fingerprint data.",
-    "EVoter does not receive raw lockscreen biometric data.",
-    "Face verification is only for identity proofing.",
-    "Face-verification data must not be linked to vote choice.",
-    "Raw face images and embeddings are not stored by default unless legally required and approved.",
-    "Candidate choice must not be stored together with voter identity."
+    "This is a research prototype, not an official identity or election service.",
+    "Use only a non-sensitive reference portrait from a consenting test participant. Do not upload government identity documents.",
+    "Reference/live images are held in short-lived in-memory or Redis sessions and are deleted after verification or TTL expiry.",
+    "The current backend does not persist face embeddings as user records.",
+    "Production privacy claims require independent review of infrastructure, logs, backups, observability, model providers, and applicable law."
   ]
 };
 
 export const securityContent = {
-  title: "Security",
+  title: "Security Notes",
   content: [
-    "Phone fingerprint data stays on the device.",
-    "EVoter receives only local biometric success or failure where supported.",
-    "Identity proofing data must not be linked to vote choice.",
-    "Face images and embeddings are not stored by default.",
-    "Ballots should be encrypted and audit logs should be protected.",
-    "EVoter is not unhackable.",
-    "Production public elections require independent audit, legal approval, and certification.",
-    "Security reports can go to security@example.com."
+    "The API fails closed when required models are unavailable or liveness, quality, or identity checks do not pass.",
+    "A one-time movement challenge is consumed on the first capture attempt to reduce replay.",
+    "Production Docker Compose uses Redis-backed short-lived sessions and keeps the FastAPI port bound to localhost on the host.",
+    "Model files are external deployment assets and must be licensed, integrity-checked, calibrated, and independently evaluated.",
+    "This project does not implement certified election cryptography, a durable tally, or an official voter registry.",
+    "Real public-election use requires independent security audits, legal approval, accessibility review, operational controls, and certification."
   ]
 };
 
 export const termsContent = {
-  title: "Terms and Conditions",
+  title: "Prototype Terms",
   content: [
-    "This is prototype text and needs legal review.",
-    "Users must use EVoter only for permitted purposes.",
-    "Users must not impersonate another voter.",
-    "Users must not upload fake documents.",
-    "Users must not coerce, buy, sell, or force votes.",
-    "Users must not spoof face verification, use replay attacks, phish users, attack the system, scrape data, or bypass controls.",
-    "Remote voting for binding public elections requires official approval.",
-    "Support contact is support@example.com."
+    "Use this repository only for research, development, testing, and permitted demonstrations.",
+    "Do not submit real Aadhaar, DigiLocker, OTP, password, voter ID, passport, or other sensitive credentials or documents.",
+    "Do not impersonate another person or use biometric data without their consent.",
+    "Do not represent this prototype as an official election, government identity service, or certified voting system.",
+    "The demo result is not a legal identity decision and the demo receipt is not an election record."
   ]
 };
 
 export const helpContent = {
   title: "Help Centre",
   faqs: [
-    { q: "What is EVoter?", a: "EVoter is a secure, verifiable remote voting system." },
-    { q: "How do I verify my identity?", a: "You verify your identity using official documents via DigiLocker, followed by a live biometric check." },
-    { q: "Why do I need DigiLocker verification?", a: "DigiLocker ensures that your identity is tied to an official government record." },
-    { q: "Does EVoter store my fingerprint?", a: "No. EVoter does not store raw phone fingerprint data." },
-    { q: "Why did face verification fail?", a: "Face verification can fail because of lighting, blur, multiple faces, camera permission, or liveness failure." },
-    { q: "How do I improve camera lighting?", a: "Ensure you are in a well-lit area with the light source in front of you." },
-    { q: "What if my phone camera does not work?", a: "You will need a device with a functioning camera to complete verification." },
-    { q: "What if I cannot use fingerprint or face verification?", a: "Please contact the election authority for alternative arrangements." },
-    { q: "How do I know my vote was submitted?", a: "You will receive a cryptographic voting receipt." },
-    { q: "Can anyone see who I voted for?", a: "No. Identity proofing data must not be linked to vote choice." },
-    { q: "What should I do if someone is forcing me to vote?", a: "If someone is forcing the voter, they should leave the voting flow and contact official support or election authority." },
-    { q: "How do I report a problem?", a: "Use the Contact section. Users should not be told how to bypass verification." },
-    { q: "What happens if the app is down?", a: "Wait and try again later; election systems are continuously monitored." }
+    {
+      q: "What is EVoter?",
+      a: "EVoter is a research prototype for testing biometric verification and a non-binding demo voting workflow."
+    },
+    {
+      q: "What reference image should I use?",
+      a: "Use a clear front-facing portrait of a consenting test participant. Do not upload a government ID."
+    },
+    {
+      q: "Why did face verification fail?",
+      a: "Common reasons include missing model assets, lighting, blur, face size or position, multiple faces, failed liveness, or similarity below the configured threshold."
+    },
+    {
+      q: "What does manual review mean?",
+      a: "It is only an API decision state for borderline similarity. This repository does not include a staffed human adjudication workflow."
+    },
+    {
+      q: "Are the thresholds certified?",
+      a: "No. They are configuration defaults and must be calibrated and independently validated for any target model and camera environment."
+    },
+    {
+      q: "Can I use this for a real election?",
+      a: "Not as-is. The repository intentionally remains a research and demo system."
+    }
   ]
 };
 
 export const contactContent = {
   title: "Contact",
   emails: [
-    { label: "Support", email: "support@example.com" },
-    { label: "Privacy", email: "privacy@example.com" },
-    { label: "Security", email: "security@example.com" }
+    { label: "Project support", email: "support@example.com" },
+    { label: "Security reports", email: "security@example.com" }
   ]
 };

@@ -83,9 +83,9 @@ interface StepperProps {
 
 function Stepper({ currentStep }: StepperProps) {
   const steps = [
-    { n: 1, label: 'Upload ID' },
-    { n: 2, label: 'Live Photo' },
-    { n: 3, label: 'Match Result' },
+    { n: 1, label: 'Reference Photo' },
+    { n: 2, label: 'Live Burst' },
+    { n: 3, label: 'Result' },
   ];
   const progressPct = ((currentStep - 1) / (steps.length - 1)) * 100;
 
@@ -163,29 +163,29 @@ export default function App() {
               Verification Pipeline Active
             </div>
             <h2 className="hero-title">
-              <span className="text-gradient">Biometric Voter Authentication</span>
+              <span className="text-gradient">Biometric Verification Research Harness</span>
             </h2>
             <p className="hero-description">
-              Upload your Aadhaar photo, capture a live selfie, and our AI pipeline
-              will verify your identity — with zero permanent storage and
-              end-to-end session encryption.
+              Use a non-sensitive reference portrait, complete a one-time live camera
+              movement challenge, and inspect the backend verification result.
+              This harness is for research and testing only.
             </p>
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-value">99.7%</div>
-                <div className="stat-label">Accuracy</div>
+                <div className="stat-value">8</div>
+                <div className="stat-label">Live Frames</div>
               </div>
               <div className="stat-card">
-                <div className="stat-value">2.3s</div>
-                <div className="stat-label">Avg Verify</div>
+                <div className="stat-value">5 min</div>
+                <div className="stat-label">Default TTL</div>
               </div>
               <div className="stat-card">
-                <div className="stat-value">0</div>
-                <div className="stat-label">Images Stored</div>
+                <div className="stat-value">3</div>
+                <div className="stat-label">Decision States</div>
               </div>
               <div className="stat-card">
-                <div className="stat-value">5</div>
-                <div className="stat-label">Frames Captured</div>
+                <div className="stat-value">Demo</div>
+                <div className="stat-label">Research Status</div>
               </div>
             </div>
           </div>

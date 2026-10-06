@@ -1,10 +1,13 @@
 import os
+from dataclasses import dataclass
+from typing import Literal, Optional
+
 import cv2
 import numpy as np
-from dataclasses import dataclass
-from typing import Optional, Literal
-from backend.services.face_detection import BoundingBox
+
 from backend.config.settings import settings
+from backend.services.face_detection import BoundingBox
+
 
 @dataclass
 class LivenessResult:
@@ -12,78 +15,130 @@ class LivenessResult:
     score: float
     method: str
     error: Optional[str] = None
-    
+
     @property
     def is_live(self) -> bool:
         return self.status == "live"
 
+
 _liveness_net = None
 _model_load_attempted = False
 
+
 def _get_liveness_net():
     global _liveness_net, _model_load_attempted
+
     if not _model_load_attempted:
         _model_load_attempted = True
         model_path = settings.LIVENESS_MODEL_PATH
-        if os.path.exists(model_path):
+        if os.path.isfile(model_path):
             try:
                 _liveness_net = cv2.dnn.readNetFromONNX(model_path)
-            except Exception as e:
-                print(f"Failed to load liveness ONNX model: {e}")
+            except Exception:
+                _liveness_net = None
+
     return _liveness_net
 
-def check_liveness(image: np.ndarray, face_box: Optional[BoundingBox] = None) -> LivenessResult:
-    """
-    Real liveness detection (Anti-spoofing) using Silent-Face / FAS-Net ONNX.
-    Fails gracefully if the model is absent, returning 'model_not_available'.
+
+def _softmax(values: np.ndarray) -> np.ndarray:
+    flattened = np.asarray(values, dtype=np.float32).reshape(-1)
+    shifted = flattened - np.max(flattened)
+    exp_values = np.exp(shifted)
+    denominator = float(np.sum(exp_values))
+
+    if denominator <= 0 or not np.isfinite(denominator):
+        raise ValueError("invalid_liveness_output")
+
+    return exp_values / denominator
+
+
+def check_liveness(
+    image: np.ndarray,
+    face_box: Optional[BoundingBox] = None,
+) -> LivenessResult:
+    """Evaluate a configured Silent-Face/MiniFAS-style ONNX classifier.
+
+    The real-class index and decision thresholds are runtime configuration because
+    model exports differ. A deployment must validate these values against its exact
+    licensed model and camera environment before relying on the result.
     """
     if image is None or image.size == 0:
-        return LivenessResult(status="uncertain", score=0.0, method="fas_net", error="invalid_image")
-        
+        return LivenessResult(
+            status="uncertain",
+            score=0.0,
+            method="fas_net",
+            error="invalid_image",
+        )
+
     net = _get_liveness_net()
-    
     if net is None:
-        return LivenessResult(status="model_not_available", score=0.0, method="fas_net", error="model_not_available")
-        
+        return LivenessResult(
+            status="model_not_available",
+            score=0.0,
+            method="fas_net",
+            error="model_not_available",
+        )
+
     if face_box is None:
-        return LivenessResult(status="uncertain", score=0.0, method="fas_net", error="no_face_box_provided")
+        return LivenessResult(
+            status="uncertain",
+            score=0.0,
+            method="fas_net",
+            error="no_face_box_provided",
+        )
 
     try:
-        # SilentFace typically expects the face crop to include background context.
-        # We expand the bounding box by 50% before cropping.
-        h, w = image.shape[:2]
+        height, width = image.shape[:2]
         pad_x = int(face_box.width * 0.5)
         pad_y = int(face_box.height * 0.5)
-        
+
         x1 = max(0, face_box.x - pad_x)
         y1 = max(0, face_box.y - pad_y)
-        x2 = min(w, face_box.x + face_box.width + pad_x)
-        y2 = min(h, face_box.y + face_box.height + pad_y)
-        
+        x2 = min(width, face_box.x + face_box.width + pad_x)
+        y2 = min(height, face_box.y + face_box.height + pad_y)
+
         face_crop = image[y1:y2, x1:x2]
-        
         if face_crop.size == 0:
-             return LivenessResult(status="uncertain", score=0.0, method="fas_net", error="invalid_crop")
-             
-        # Preprocess for SilentFace (typically 80x80, unscaled mean/std depending on exact architecture)
-        blob = cv2.dnn.blobFromImage(face_crop, 1.0, (80, 80), (0, 0, 0), swapRB=False)
+            return LivenessResult(
+                status="uncertain",
+                score=0.0,
+                method="fas_net",
+                error="invalid_crop",
+            )
+
+        blob = cv2.dnn.blobFromImage(
+            face_crop,
+            1.0,
+            (80, 80),
+            (0, 0, 0),
+            swapRB=False,
+        )
         net.setInput(blob)
-        
-        out = net.forward()
-        out = np.squeeze(out)
-        
-        # Mocking the actual class indexing based on standard MiniFASNet: index 1 is Real, 0 is Fake.
-        score = float(out[1] if len(out) > 1 else out[0])
-        
-        if score > 0.8:
+        probabilities = _softmax(net.forward())
+
+        real_index = settings.LIVENESS_REAL_CLASS_INDEX
+        if real_index < 0 or real_index >= probabilities.size:
+            return LivenessResult(
+                status="uncertain",
+                score=0.0,
+                method="fas_net",
+                error="real_class_index_out_of_range",
+            )
+
+        score = float(probabilities[real_index])
+
+        if score >= settings.LIVENESS_LIVE_THRESHOLD:
             status = "live"
-        elif score < 0.4:
+        elif score <= settings.LIVENESS_SPOOF_THRESHOLD:
             status = "spoof"
         else:
             status = "uncertain"
-            
+
         return LivenessResult(status=status, score=score, method="fas_net")
-        
-    except Exception as e:
-        print(f"Liveness inference failed: {e}")
-        return LivenessResult(status="uncertain", score=0.0, method="fas_net", error="model_execution_failed")
+    except Exception:
+        return LivenessResult(
+            status="uncertain",
+            score=0.0,
+            method="fas_net",
+            error="model_execution_failed",
+        )

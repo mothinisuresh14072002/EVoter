@@ -1,228 +1,300 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import styles from './admin.module.css';
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
 interface Candidate {
   id: string;
   name: string;
   party: string;
-  place?: string;
-  district?: string;
+  place: string;
+  district: string;
   votes?: number;
 }
 
-export default function AdminPortal() {
+export default function AdminSandbox() {
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [password, setPassword] = useState("");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [tally, setTally] = useState<Candidate[]>([]);
-  const [name, setName] = useState('');
-  const [party, setParty] = useState('');
-  const [place, setPlace] = useState('');
-  const [district, setDistrict] = useState('');
-  const [error, setError] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [form, setForm] = useState({
+    name: "",
+    party: "",
+    place: "",
+    district: "",
+  });
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    // Check if user previously logged in during this session
-    const authStatus = sessionStorage.getItem('adminAuth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
+  const loadData = useCallback(async () => {
+    const [candidateResponse, tallyResponse] = await Promise.all([
+      fetch("/api/admin/candidates", { cache: "no-store" }),
+      fetch("/api/admin/tally", { cache: "no-store" }),
+    ]);
 
-  const fetchCandidates = async () => {
-    try {
-      const res = await fetch('http://localhost:8000/admin/candidates');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setCandidates(data);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchTally = async () => {
-    try {
-      const res = await fetch('http://localhost:8000/admin/tally');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setTally(data);
-      } else {
-        setTally([]);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    fetchCandidates();
-    fetchTally();
-    const interval = setInterval(fetchTally, 5000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passcode === 'EVOTER_ADMIN_2026') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('adminAuth', 'true');
-      setLoginError('');
-    } else {
-      setLoginError('Invalid passcode. Access denied.');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem('adminAuth');
-    setPasscode('');
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !party || !place || !district) {
-      setError('Please fill in all fields (name, party, place, district).');
+    if (candidateResponse.status === 401 || tallyResponse.status === 401) {
+      setAuthenticated(false);
       return;
     }
-    try {
-      const res = await fetch('http://localhost:8000/admin/candidates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, party, place, district })
-      });
-      if (res.ok) {
-        setName('');
-        setParty('');
-        setPlace('');
-        setDistrict('');
-        setError('');
-        fetchCandidates();
-        fetchTally();
-      } else {
-        setError('Failed to register candidate.');
-      }
-    } catch (e) {
-      setError('Network error.');
-    }
-  };
 
-  if (!isAuthenticated) {
+    if (!candidateResponse.ok || !tallyResponse.ok) {
+      throw new Error("Unable to load the admin sandbox.");
+    }
+
+    const [candidateData, tallyData] = await Promise.all([
+      candidateResponse.json(),
+      tallyResponse.json(),
+    ]);
+
+    setCandidates(Array.isArray(candidateData) ? candidateData : []);
+    setTally(Array.isArray(tallyData) ? tallyData : []);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .then(({ authenticated: active }) => setAuthenticated(Boolean(active)))
+      .catch(() => setAuthenticated(false));
+  }, []);
+
+  useEffect(() => {
+    if (!authenticated) return;
+
+    loadData().catch((error) =>
+      setMessage(error instanceof Error ? error.message : "Unable to load admin data."),
+    );
+
+    const timer = window.setInterval(() => {
+      loadData().catch(() => undefined);
+    }, 10000);
+
+    return () => window.clearInterval(timer);
+  }, [authenticated, loadData]);
+
+  async function login(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(body?.error || "Admin login failed.");
+      }
+
+      setPassword("");
+      setAuthenticated(true);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Admin login failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/admin/session", { method: "DELETE" }).catch(() => undefined);
+    setAuthenticated(false);
+    setCandidates([]);
+    setTally([]);
+  }
+
+  async function registerCandidate(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/candidates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(body?.error || body?.detail || "Candidate registration failed.");
+      }
+
+      setForm({ name: "", party: "", place: "", district: "" });
+      setMessage("Sandbox candidate added.");
+      await loadData();
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Candidate registration failed.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (authenticated === null) {
     return (
-      <div className="glass-panel" style={{ marginTop: '4rem', maxWidth: '400px', margin: '4rem auto', textAlign: 'center' }}>
-        <h1 style={{ marginBottom: '0.5rem', color: 'var(--color-navy)' }}>Admin Restricted</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Please enter your official passcode.</p>
-        
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {loginError && <div style={{ color: 'red', fontSize: '0.9rem' }}>{loginError}</div>}
-          <input 
-            type="password" 
-            value={passcode}
-            onChange={(e) => setPasscode(e.target.value)}
-            placeholder="Enter Passcode"
-            style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black', textAlign: 'center' }}
-            required
-          />
-          <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem' }}>
-            Login
-          </button>
-        </form>
+      <div className="center-content" style={{ minHeight: "55vh" }}>
+        <div style={{ textAlign: "center" }}>
+          <div className="spinner spinner-lg" style={{ margin: "0 auto 1rem" }} />
+          <p style={{ color: "var(--color-text-muted)" }}>Checking admin session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <div style={{ maxWidth: "460px", margin: "4rem auto" }}>
+        <div className="glass-panel" style={{ padding: "2rem" }}>
+          <h1 className="page-title" style={{ fontSize: "1.8rem" }}>
+            Admin Sandbox
+          </h1>
+          <p className="page-subtitle" style={{ marginBottom: "1rem" }}>
+            This area manages only ephemeral prototype data. It is not an election
+            authority console.
+          </p>
+
+          {message && (
+            <div className="alert alert-danger" style={{ marginBottom: "1rem" }}>
+              <div className="alert-content">
+                <p className="alert-text">{message}</p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={login}>
+            <label className="form-label" htmlFor="admin-password">
+              Admin sandbox password
+            </label>
+            <input
+              id="admin-password"
+              className="form-input"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              style={{ marginTop: "1rem" }}
+              disabled={busy}
+            >
+              {busy ? "Signing in..." : "Open admin sandbox"}
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel" style={{ marginTop: '2rem', maxWidth: '800px', margin: '2rem auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ marginBottom: '0.5rem', color: 'var(--color-navy)' }}>Official Admin Portal</h1>
-        <button onClick={handleLogout} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Logout</button>
-      </div>
-      <p style={{ color: 'var(--text-muted)' }}>Secure election management dashboard.</p>
-      
-      <div style={{ backgroundColor: 'rgba(255, 153, 51, 0.1)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 153, 51, 0.3)', margin: '1.5rem 0' }}>
-        <strong>Security Notice:</strong> By design, individual voting records are not stored and cannot be accessed. You can only view the aggregated tallies and register candidates. This prevents voter fraud and guarantees ballot secrecy.
+    <div style={{ padding: "2rem 0", maxWidth: "980px", margin: "0 auto" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "1rem",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <div>
+          <h1 className="page-title">Admin Sandbox</h1>
+          <p className="page-subtitle">
+            Ephemeral candidate and tally data for development testing only.
+          </p>
+        </div>
+        <button className="btn btn-ghost" type="button" onClick={logout}>
+          Sign out
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        {/* Registration Section */}
-        <div style={{ backgroundColor: 'var(--surface-bg)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Register Candidate</h2>
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {error && <div style={{ color: 'red', fontSize: '0.9rem' }}>{error}</div>}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <label htmlFor="name" style={{ marginBottom: '0.25rem', fontWeight: 600 }}>Candidate Name</label>
-              <input 
-                id="name"
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                type="text" 
-                placeholder="e.g. Jane Doe" 
-                style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <label htmlFor="party" style={{ marginBottom: '0.25rem', fontWeight: 600 }}>Party/Affiliation</label>
-              <input 
-                id="party"
-                value={party} 
-                onChange={(e) => setParty(e.target.value)} 
-                type="text" 
-                placeholder="e.g. Independent" 
-                style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <label htmlFor="place" style={{ marginBottom: '0.25rem', fontWeight: 600 }}>Place/Constituency</label>
-              <input 
-                id="place"
-                value={place} 
-                onChange={(e) => setPlace(e.target.value)} 
-                type="text" 
-                placeholder="e.g. Central City" 
-                style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <label htmlFor="district" style={{ marginBottom: '0.25rem', fontWeight: 600 }}>District</label>
-              <input 
-                id="district"
-                value={district} 
-                onChange={(e) => setDistrict(e.target.value)} 
-                type="text" 
-                placeholder="e.g. North District" 
-                style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'white', color: 'black' }} 
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
-              Register
+      <div className="alert alert-warning" style={{ marginBottom: "1.5rem" }}>
+        <div className="alert-content">
+          <div className="alert-title">Not a production election console</div>
+          <p className="alert-text">
+            This backend store is in-memory prototype state. The demo ballot does not add
+            votes to this tally, and restarting the backend clears this data.
+          </p>
+        </div>
+      </div>
+
+      {message && (
+        <div className="alert alert-info" style={{ marginBottom: "1.5rem" }}>
+          <div className="alert-content">
+            <p className="alert-text">{message}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-2" style={{ gap: "1.5rem", alignItems: "start" }}>
+        <div className="glass-panel" style={{ padding: "1.5rem" }}>
+          <h2 style={{ marginBottom: "1rem" }}>Add sandbox candidate</h2>
+          <form onSubmit={registerCandidate}>
+            {(["name", "party", "place", "district"] as const).map((field) => (
+              <div className="form-group" key={field}>
+                <label className="form-label" htmlFor={field}>
+                  {field.charAt(0).toUpperCase() + field.slice(1)}
+                </label>
+                <input
+                  id={field}
+                  className="form-input"
+                  value={form[field]}
+                  maxLength={120}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      [field]: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            ))}
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              disabled={busy}
+            >
+              {busy ? "Saving..." : "Add sandbox candidate"}
             </button>
           </form>
         </div>
 
-        {/* Tally Section */}
-        <div style={{ backgroundColor: 'var(--surface-bg)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Live Vote Tally</h2>
-          {tally.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No candidates registered yet.</p>
+        <div className="glass-panel" style={{ padding: "1.5rem" }}>
+          <h2 style={{ marginBottom: "1rem" }}>Sandbox state</h2>
+          {candidates.length === 0 ? (
+            <p style={{ color: "var(--color-text-muted)" }}>
+              No sandbox candidates are registered.
+            </p>
           ) : (
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-              {tally.map((c, i) => (
-                <li key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid var(--border-color)' }}>
-                  <div>
-                    <strong style={{ display: 'block', color: 'var(--text-primary)' }}>{c.name}</strong>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.party} &bull; {c.place}, {c.district}</span>
+            <div style={{ display: "grid", gap: "0.75rem" }}>
+              {candidates.map((candidate) => {
+                const tallyEntry = tally.find((item) => item.id === candidate.id);
+                return (
+                  <div
+                    key={candidate.id}
+                    style={{
+                      padding: "0.9rem",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius-md)",
+                    }}
+                  >
+                    <strong>{candidate.name}</strong>
+                    <div style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+                      {candidate.party} · {candidate.place}, {candidate.district}
+                    </div>
+                    <div style={{ marginTop: "0.35rem", fontSize: "0.85rem" }}>
+                      Mock tally: <strong>{tallyEntry?.votes ?? 0}</strong>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-green)' }}>
-                    {c.votes}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
