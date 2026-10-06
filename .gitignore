@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+/frontend/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -39,6 +40,7 @@ yarn-error.log*
 .env*
 !.env.example
 !backend/.env.example
+!frontend/.env.example
 
 # deployment assets that should not be committed
 backend/models/
