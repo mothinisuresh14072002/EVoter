@@ -46,11 +46,11 @@ async function parseResponse<T>(res: Response, action: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function uploadAadhaar(file: File): Promise<UploadAadhaarResult> {
+export async function uploadReference(file: File): Promise<UploadAadhaarResult> {
   const formData = new FormData();
   formData.append("file", file);
   return parseResponse<UploadAadhaarResult>(
-    await fetch(`${API_BASE}/upload-aadhaar`, {
+    await fetch(`${API_BASE}/upload-reference`, {
       method: "POST",
       body: formData,
     }),
