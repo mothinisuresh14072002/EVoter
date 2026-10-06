@@ -28,11 +28,11 @@ const ELECTIONS = [
 ];
 
 const TIMELINE_STEPS = [
-  { title: "DigiLocker Authentication", status: "completed", desc: "Eligibility verified via DigiLocker credentials" },
-  { title: "Biometric Presence Check", status: "pending", desc: "Fingerprint or device biometric scan" },
-  { title: "Live Face + Aadhaar Match", status: "pending", desc: "AI face verification against Aadhaar photo" },
-  { title: "Cast Encrypted Ballot", status: "pending", desc: "Select candidate and submit anonymously" },
-  { title: "Receive Verifiable Receipt", status: "pending", desc: "Get unique receipt ID for independent audit" },
+  { title: "Demo voter session", status: "completed", desc: "Temporary research session created with invented demo values" },
+  { title: "Biometric demo challenge", status: "pending", desc: "Reference portrait + one-time live head-turn challenge" },
+  { title: "Verification decision", status: "pending", desc: "Server-side liveness, quality, and face-similarity checks" },
+  { title: "Submit demo ballot", status: "pending", desc: "Cast a non-binding simulated ballot after verification" },
+  { title: "Receive demo receipt", status: "pending", desc: "Get a non-binding receipt identifier for the simulation" },
 ];
 
 function getTimeRemaining(endIso: string) {
@@ -104,7 +104,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
           <span className="badge badge-success">
-            <span className="badge-dot"></span>Eligibility Verified
+            <span className="badge-dot"></span>Demo Session Active
           </span>
           <span className="badge badge-info">
             <span className="badge-dot"></span>Session: 12 min left
@@ -224,8 +224,8 @@ export default function Dashboard() {
                 </div>
               </div>
               <div style={{ flexShrink: 0 }}>
-                <Link href="/vote" className="btn btn-primary btn-lg">
-                  Cast Vote
+                <Link href="/verify" className="btn btn-primary btn-lg">
+                  Verify & Open Demo Ballot
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -307,10 +307,10 @@ export default function Dashboard() {
         </h3>
         <ul style={{ paddingLeft: "1.5rem", color: "var(--color-text-muted)", lineHeight: 2 }}>
           <li>Ensure you are in a private, well-lit environment before casting your vote.</li>
-          <li>You will be required to authenticate via biometrics and a live face scan to cast your ballot.</li>
-          <li>Your ballot is encrypted on your device before submission and cannot be linked back to your identity.</li>
-          <li>Once submitted, you will receive a unique, verifiable receipt code. Store this safely for audit purposes.</li>
-          <li>All biometric and image data is discarded immediately after the verification session completes.</li>
+          <li>The demo ballot requires the project’s temporary biometric verification flow.</li>
+          <li>This repository demonstrates authorization flow separation; it does not implement a certified election cryptosystem.</li>
+          <li>Once submitted, you receive a demo receipt code for the prototype flow; it is not an official election record.</li>
+          <li>Biometric images are kept only in short-lived verification sessions and are deleted after verification; production privacy controls still require independent validation.</li>
         </ul>
       </div>
     </div>
