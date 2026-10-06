@@ -20,7 +20,7 @@ It is **not** connected to DigiLocker, Aadhaar, UIDAI, the Election Commission o
 - safe JSON/compressed-array Redis serialization (no pickle deserialization)
 - signed short-lived voter, biometric, and admin web sessions
 - server-side admin proxy; backend admin key is never exposed to browser code
-- Docker Compose deployment with Redis and backend readiness gating
+- Docker Compose deployment with Redis plus frontend/backend health gating
 - GitHub Actions for Next.js, Vite, backend tests, and production Docker builds
 
 ## What is intentionally not implemented
@@ -158,6 +158,7 @@ docker compose up --build -d
 
 ```bash
 docker compose ps
+curl http://127.0.0.1:3000/api/health
 curl http://127.0.0.1:8000/health
 curl http://127.0.0.1:8000/ready
 ```
@@ -292,18 +293,20 @@ Important implemented controls:
 - safe non-executable Redis serialization
 - signed HTTP-only, SameSite=Strict demo cookies
 - server-only admin API key
-- backend host binding to `127.0.0.1` in Compose
-- baseline browser headers
+- frontend and backend host bindings to `127.0.0.1` in Compose
+- frontend runtime health endpoint at `/api/health`
+- production CSP/HSTS plus baseline browser security headers
 - generated artifacts/dependencies removed from Git
 - CI validation for both frontend applications, backend tests, and Docker builds
 
 Before exposing a demo publicly, also add:
 
 - HTTPS
-- reverse-proxy/platform rate limiting
+- reverse-proxy/platform rate limiting (the example Nginx config applies stricter limits to login/admin-session routes)
 - secret rotation and managed secret storage
 - centralized monitoring without biometric payload logging
 - dependency/container vulnerability scanning
+- edge request-size controls that keep single-image requests small while allowing bounded multi-frame capture
 - model checksums/signatures and provenance controls
 - backups/incident response appropriate to the deployment
 - independent penetration testing
