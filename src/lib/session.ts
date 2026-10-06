@@ -1,6 +1,6 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
-export type SessionPurpose = "voter" | "biometric";
+export type SessionPurpose = "voter" | "biometric" | "admin";
 
 type SignedPayload = {
   purpose: SessionPurpose;
