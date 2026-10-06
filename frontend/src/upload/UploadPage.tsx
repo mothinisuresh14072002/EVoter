@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { uploadReference } from '../api/client';
 import { StatusMessage } from '../components/StatusMessage';
 
@@ -45,6 +45,12 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const chooseFile = () => inputRef.current?.click();
 
