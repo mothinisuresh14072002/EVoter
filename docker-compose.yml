@@ -7,6 +7,11 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
+      EVOTER_DEMO_MODE: ${EVOTER_DEMO_MODE:-true}
+      SESSION_SIGNING_SECRET: ${SESSION_SIGNING_SECRET:?Set SESSION_SIGNING_SECRET in .env}
+      ADMIN_UI_PASSWORD: ${ADMIN_UI_PASSWORD:?Set ADMIN_UI_PASSWORD in .env}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in .env}
+      BACKEND_INTERNAL_URL: http://backend:8000
     depends_on:
       backend:
         condition: service_healthy
@@ -20,6 +25,8 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    environment:
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in .env}
     volumes:
       - ./backend/models:/app/models:ro
     depends_on:
