@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { verifySignedSession } from "@/lib/session";
+
 export async function POST(request: Request) {
   if (process.env.EVOTER_DEMO_MODE !== "true") {
     return NextResponse.json(
@@ -10,20 +12,34 @@ export async function POST(request: Request) {
   }
 
   const cookieStore = await cookies();
-  const session = cookieStore.get("evoter_session");
-  const biometric = cookieStore.get("evoter_biometric");
 
-  if (!session) {
-    return NextResponse.json(
-      { error: "No active demo voter session." },
-      { status: 401 },
+  try {
+    const voterSessionValid = verifySignedSession(
+      cookieStore.get("evoter_session")?.value,
+      "voter",
     );
-  }
+    const biometricSessionValid = verifySignedSession(
+      cookieStore.get("evoter_biometric")?.value,
+      "biometric",
+    );
 
-  if (!biometric) {
+    if (!voterSessionValid) {
+      return NextResponse.json(
+        { error: "No valid demo voter session." },
+        { status: 401 },
+      );
+    }
+
+    if (!biometricSessionValid) {
+      return NextResponse.json(
+        { error: "Biometric verification is required before opening the demo ballot." },
+        { status: 403 },
+      );
+    }
+  } catch {
     return NextResponse.json(
-      { error: "Biometric verification is required before opening the demo ballot." },
-      { status: 403 },
+      { error: "Demo session signing is not configured." },
+      { status: 503 },
     );
   }
 
