@@ -13,6 +13,16 @@ updates:
           - "react-dom"
       frontend-tooling:
         dependency-type: "development"
+    ignore:
+      # Next.js 16.3.x currently depends on tooling that does not support these
+      # newer majors. Keep receiving patch/minor updates without reopening known
+      # incompatible major-upgrade PRs.
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: "npm"
     directory: "/frontend"
