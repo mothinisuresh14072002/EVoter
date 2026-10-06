@@ -71,7 +71,7 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
     setError('');
 
     try {
-      const result = await uploadAadhaar(file);
+      const result = await uploadReference(file);
       if (result.status === 'success') {
         setStatus('Reference image accepted ✓');
         setTimeout(() => onSuccess(result.session_id), 400);
@@ -100,9 +100,8 @@ export function UploadPage({ onSuccess }: { onSuccess: (sessionId: string) => vo
     <div className="glass-panel fade-in">
       <h2 className="page-title">Step 1 · Upload Reference Portrait</h2>
       <p className="page-subtitle">
-        Upload a clear, front-facing photograph of your Aadhaar ID. The image is
-        processed in an ephemeral session and discarded immediately after
-        verification.
+        Upload a clear, front-facing portrait of the same consenting test participant
+        who will use the camera. Do not upload government IDs or sensitive documents.
       </p>
 
       <div className="alert alert-info">
