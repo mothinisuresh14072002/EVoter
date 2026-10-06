@@ -93,8 +93,8 @@ export default function BiometricVerificationPage() {
       setStage("ready");
       setStatus(
         challengeResult.challenge === "turn_left"
-          ? "Camera ready. Start facing forward; during capture, slowly turn your head LEFT."
-          : "Camera ready. Start facing forward; during capture, slowly turn your head RIGHT.",
+          ? "Camera ready. Start centered; during capture, slowly move your face toward the LEFT side of the frame."
+          : "Camera ready. Start centered; during capture, slowly move your face toward the RIGHT side of the frame.",
       );
     } catch (err) {
       stopCamera();
@@ -148,7 +148,7 @@ export default function BiometricVerificationPage() {
 
       for (let index = 0; index < 8; index += 1) {
         setStatus(
-          `Capturing frame ${index + 1} of 8 — slowly complete the ${challenge.challenge === "turn_left" ? "LEFT" : "RIGHT"} turn.`,
+          `Capturing frame ${index + 1} of 8 — slowly move toward the ${challenge.challenge === "turn_left" ? "LEFT" : "RIGHT"} side of the frame.`,
         );
         frames.push(await captureFrame());
         await new Promise((resolve) => setTimeout(resolve, 280));
