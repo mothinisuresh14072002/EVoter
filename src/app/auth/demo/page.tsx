@@ -1,19 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function DemoVoterAccess() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
   const [voterCode, setVoterCode] = useState("");
   const [demoPin, setDemoPin] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    searchParams.get("error") ? "Your demo session could not be restored." : null,
-  );
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
