@@ -1,5 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+
+import { createSignedSession } from "@/lib/session";
 
 export async function GET(request: Request) {
   return NextResponse.redirect(new URL("/auth/digilocker", request.url));
@@ -24,18 +25,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = NextResponse.json({ success: true, mode: "demo" });
+  try {
+    const response = NextResponse.json({ success: true, mode: "demo" });
 
-  response.cookies.set({
-    name: "evoter_session",
-    value: randomUUID(),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 60 * 15,
-    path: "/",
-  });
+    response.cookies.set({
+      name: "evoter_session",
+      value: createSignedSession("voter", 60 * 15),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 15,
+      path: "/",
+    });
 
-  response.cookies.delete("evoter_biometric");
-  return response;
+    response.cookies.delete("evoter_biometric");
+    return response;
+  } catch {
+    return NextResponse.json(
+      { error: "Demo session signing is not configured." },
+      { status: 503 },
+    );
+  }
 }
