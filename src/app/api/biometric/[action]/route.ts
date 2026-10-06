@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+import { verifySignedSession } from "@/lib/session";
 
 const BACKEND_URL = (process.env.BACKEND_INTERNAL_URL || "http://localhost:8000").replace(/\/$/, "");
 
@@ -12,6 +15,21 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ action: string }> },
 ) {
+  try {
+    const cookieStore = await cookies();
+    if (!verifySignedSession(cookieStore.get("evoter_session")?.value, "voter")) {
+      return NextResponse.json(
+        { error: "A valid demo voter session is required." },
+        { status: 401 },
+      );
+    }
+  } catch {
+    return NextResponse.json(
+      { error: "Demo session signing is not configured." },
+      { status: 503 },
+    );
+  }
+
   const { action } = await context.params;
   const backendPath = ACTIONS[action];
 
