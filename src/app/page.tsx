@@ -100,7 +100,7 @@ export default function Home() {
         </p>
 
         <div className="hero-actions animate-slide-up animation-delay-400">
-          <Link href="/auth/digilocker" className="btn btn-primary btn-lg">
+          <Link href="/auth/demo" className="btn btn-primary btn-lg">
             Open Research Demo
           </Link>
           <a href="#how-it-works" className="btn btn-outline btn-lg">
@@ -280,7 +280,7 @@ export default function Home() {
             Use invented demo credentials and a non-sensitive portrait from a consenting
             test participant. Do not enter official credentials or identity documents.
           </p>
-          <Link href="/auth/digilocker" className="btn btn-primary btn-lg">
+          <Link href="/auth/demo" className="btn btn-primary btn-lg">
             Start Demo
           </Link>
         </div>
