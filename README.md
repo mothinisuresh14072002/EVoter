@@ -58,13 +58,13 @@ The UI is organized around a straightforward voter journey:
 
 | Area | Capability | Current intent |
 |---|---|---|
-| 🪪 Identity | DigiLocker-oriented authentication UX | Establish an eligible voter session in the prototype UI |
+| 🪪 Identity | Explicit research-demo access | Starts a signed, temporary voter session using invented demo values; no DigiLocker/Aadhaar integration |
 | 📷 Camera | Browser live-capture workflow | Capture a temporary live image for verification |
 | 🤖 Face verification | Face detection + embedding comparison | Compare reference and live captures |
 | 🛡️ Liveness | Anti-spoofing / liveness result | Distinguish live, spoof, or uncertain outcomes |
 | 📐 Quality checks | Blur, brightness, dimensions | Reject unusable captures with reason codes |
 | 🧠 Decisioning | `verified`, `manual_review`, `failed` | Keep application routing simple and typed |
-| ⏱️ Ephemeral sessions | TTL-based in-memory state | Reduce long-lived biometric data exposure |
+| ⏱️ Ephemeral sessions | Redis-backed TTL state | Support short-lived verification state across workers while reducing biometric data exposure |
 | 🧾 Receipt experience | Receipt route and verification UX | Support voter-visible auditability |
 | 🧑‍💼 Admin | Admin application surface | Support prototype operational workflows |
 | 🧪 Testing | `pytest` backend suite | Validate backend verification behavior |
@@ -133,7 +133,7 @@ EVoter’s backend documentation establishes strict data-minimization rules for 
 - **No Aadhaar identifier returned by the verification service**
 - **No biometric data attached to candidate or ballot choice**
 - **No raw image / embedding / identity data in logs**
-- **Short-lived verification sessions with expiry**
+- **Redis-backed short-lived verification sessions with expiry (5-minute default)**
 - **Immediate session cleanup after verification**
 - **Generic reason codes instead of sensitive debug payloads**
 
@@ -234,10 +234,11 @@ EVoter/
 
 ### Prerequisites
 
-- Node.js compatible with Next.js 16
+- Node.js 22+ (matches CI)
 - npm
-- Python 3.10+
-- A virtual environment
+- Python 3.12 recommended (matches CI)
+- Redis 7+ for the hardened shared session store, or Docker Compose
+- A Python virtual environment for non-container development
 - Required computer-vision model files for biometric inference
 
 ### 1. Clone the repository
@@ -284,7 +285,7 @@ The backend supports environment-based configuration.
 
 ```bash
 MAX_IMAGE_MB=5
-SESSION_TTL_SECONDS=3600
+SESSION_TTL_SECONDS=300
 MATCH_THRESHOLD=0.85
 MANUAL_REVIEW_THRESHOLD=0.70
 MIN_IMAGE_WIDTH=200
@@ -292,6 +293,8 @@ MIN_IMAGE_HEIGHT=200
 FACE_DETECTION_MODEL_PATH=models/scrfd_500m.onnx
 FACE_EMBEDDING_MODEL_PATH=models/adaface_ir50.onnx
 LIVENESS_MODEL_PATH=models/silent_face.onnx
+SESSION_STORE_BACKEND=redis
+REDIS_URL=redis://localhost:6379/0
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
@@ -315,13 +318,9 @@ OpenAPI UI:  http://localhost:8000/docs
 
 ## 🔌 Biometric API
 
-### `POST /upload-aadhaar`
+### Reference + live capture
 
-Accepts the temporary reference image used for the prototype verification session.
-
-### `POST /capture-live`
-
-Accepts a temporary live-camera capture.
+The voter-facing Next.js app now uses a server-backed biometric flow with a temporary reference portrait plus a one-time temporal live-camera challenge. The production UI captures multiple live frames and releases camera/object-URL resources after use. Raw biometric artifacts remain confined to the verification service/session layer.
 
 ### `POST /verify`
 
@@ -403,7 +402,8 @@ Expected response:
 ## 🗺️ Suggested Roadmap
 
 - [ ] Add authenticated API-gateway protection
-- [ ] Add IP- and token-based rate limiting
+- [x] Add reverse-proxy rate-limiting example and stricter login/admin limits
+- [ ] Add application-aware distributed rate limiting where required
 - [ ] Add model checksum / signature verification
 - [ ] Add production-grade secrets management
 - [ ] Add stronger automated frontend and end-to-end tests
@@ -411,7 +411,7 @@ Expected response:
 - [ ] Add independent threat modeling and penetration testing
 - [ ] Add formal election-process and privacy compliance review
 - [ ] Add documented disaster-recovery and incident-response procedures
-- [ ] Add reproducible deployment and infrastructure configuration
+- [x] Add reproducible Docker Compose deployment and infrastructure configuration
 
 ---
 
