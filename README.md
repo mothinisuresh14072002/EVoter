@@ -230,6 +230,115 @@ EVoter/
 
 ---
 
+## ▶️ Quick Run Commands
+
+### Easiest option — Docker
+
+From the project root:
+
+```bash
+copy .env.example .env
+copy backend\.env.example backend\.env
+docker compose up --build
+```
+
+On macOS/Linux, use:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+docker compose up --build
+```
+
+Then open:
+
+```text
+Frontend: http://localhost:3000
+Backend:  http://localhost:8000
+API Docs: http://localhost:8000/docs
+```
+
+> Before starting Docker, replace the placeholder values in `.env` for `SESSION_SIGNING_SECRET`, `ADMIN_UI_PASSWORD`, and `ADMIN_API_KEY`. Keep the same `ADMIN_API_KEY` value in `backend/.env`.
+
+### Windows local development — CMD
+
+Open **three Command Prompt windows** in the EVoter folder.
+
+**Terminal 1 — Redis**
+
+```cmd
+docker run --rm --name evoter-redis -p 6379:6379 redis:7-alpine
+```
+
+**Terminal 2 — Backend**
+
+First-time setup:
+
+```cmd
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r backend\requirements.txt
+copy backend\.env.example backend\.env
+```
+
+Run the backend:
+
+```cmd
+.venv\Scripts\activate
+python -m uvicorn backend.main:app --reload --port 8000
+```
+
+**Terminal 3 — Frontend**
+
+First-time setup:
+
+```cmd
+copy .env.example .env
+npm install
+```
+
+Run the frontend:
+
+```cmd
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+### macOS / Linux local development
+
+**Terminal 1 — Redis**
+
+```bash
+docker run --rm --name evoter-redis -p 6379:6379 redis:7-alpine
+```
+
+**Terminal 2 — Backend**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+cp backend/.env.example backend/.env
+python -m uvicorn backend.main:app --reload --port 8000
+```
+
+**Terminal 3 — Frontend**
+
+```bash
+cp .env.example .env
+npm install
+npm run dev
+```
+
+> The biometric backend also requires the configured ONNX model files under `backend/models/`. See the deployment section below for the expected filenames.
+
+---
+
 ## 🚀 Local Development
 
 ### Prerequisites
